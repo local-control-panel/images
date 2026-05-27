@@ -1,0 +1,33 @@
+# Local mode overlay — applied on top of docker-compose.yml when running locally.
+# Uses locally built wcp/* images (configs baked in) and local data directories.
+#
+# Applied automatically by the app. Manual usage:
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
+
+services:
+
+  frankenphp:
+    # Locally built image with Caddyfile + php.ini baked in
+    image: ${WCP_FRANKENPHP_IMAGE:-wcp/frankenphp:1-php8.3}
+    volumes:
+      # Config files are baked into the image — only mount data and runtime dirs
+      - caddy_data:/data
+      - caddy_config:/config
+      - ${WCP_CADDYFILE_D}:/etc/frankenphp/Caddyfile.d:ro
+      - ${WCP_WWW_ROOT}:/var/www
+      - ${WCP_CADDY_LOG}:/var/log/caddy
+
+  mariadb:
+    # Locally built image with conf.d baked in — no config volume mount needed
+    image: ${WCP_MARIADB_IMAGE:-wcp/mariadb:11.4}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  valkey:
+    # Locally built image with valkey.conf baked in
+    image: ${WCP_VALKEY_IMAGE:-wcp/valkey:8}
+    volumes:
+      - valkey_data:/data
+
+  postgres:
+    image: ${WCP_POSTGRES_IMAGE:-postgres:17-alpine}

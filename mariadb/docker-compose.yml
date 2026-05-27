@@ -1,0 +1,40 @@
+services:
+  mariadb:
+    image: mariadb:${MARIADB_VERSION:-11.4}
+    container_name: mariadb
+    restart: unless-stopped
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?required}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-wordpress}
+      MARIADB_USER: ${MARIADB_USER:-wp}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:?required}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./conf.d:/etc/mysql/conf.d:ro
+    networks:
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  mariadb_data:
+
+networks:
+  backend:
+    external: true
+    name: wp-backend

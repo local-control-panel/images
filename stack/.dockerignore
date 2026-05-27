@@ -1,0 +1,9 @@
+node_modules/
+.git/
+src/
+out/
+dist/
+release/
+*.md
+.env
+.env.*

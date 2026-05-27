@@ -1,0 +1,12 @@
+{
+    # Global options
+    admin off
+    persist_config off
+
+    frankenphp {
+        worker /var/www/html/index.php {$FRANKENPHP_WORKER_PROCESSES:4}
+    }
+}
+
+# Import per-site Caddyfiles managed by the control panel
+import /etc/frankenphp/Caddyfile.d/*.caddyfile

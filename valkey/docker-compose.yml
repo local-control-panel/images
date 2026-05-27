@@ -1,0 +1,33 @@
+services:
+  valkey:
+    image: valkey/valkey:${VALKEY_VERSION:-8}-alpine
+    container_name: valkey
+    restart: unless-stopped
+    env_file:
+      - path: ../.env
+        required: false
+    command: valkey-server /etc/valkey/valkey.conf
+    volumes:
+      - ./valkey.conf:/etc/valkey/valkey.conf:ro
+      - valkey_data:/data
+    networks:
+      - backend
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  valkey_data:
+
+networks:
+  backend:
+    external: true
+    name: wp-backend

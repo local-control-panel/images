@@ -1,0 +1,50 @@
+services:
+  frankenphp:
+    image: dunglas/frankenphp:${FRANKENPHP_VERSION:-1}-php${PHP_VERSION:-8.3}-alpine
+    container_name: frankenphp
+    restart: unless-stopped
+    env_file:
+      - path: ../.env
+        required: false   # falls back to inline defaults if .env absent
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - /etc/frankenphp/Caddyfile.d:/etc/frankenphp/Caddyfile.d:ro
+      - /var/www:/var/www
+      - /var/log/caddy:/var/log/caddy
+    environment:
+      SERVER_NAME: ${SERVER_NAME:-:80}
+      FRANKENPHP_WORKER_PROCESSES: ${WORKER_PROCESSES:-4}
+    networks:
+      - backend
+    cap_add:
+      - NET_ADMIN   # required for HTTP/3
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1024M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/up"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  backend:
+    external: true
+    name: wp-backend

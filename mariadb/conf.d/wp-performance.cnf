@@ -1,0 +1,38 @@
+[mysqld]
+# Character set — required for full emoji support in WP
+character_set_server     = utf8mb4
+collation_server         = utf8mb4_unicode_ci
+
+# InnoDB buffer pool — set to ~50% of available RAM
+# Adjust MARIADB_INNODB_BUFFER_POOL_SIZE in .env for your VPS size:
+#   2 GB VPS → 768M   4 GB → 1536M   8 GB → 3072M
+innodb_buffer_pool_size  = 1024M
+innodb_buffer_pool_instances = 4       # one per 256 MB of pool
+innodb_log_file_size     = 256M
+innodb_log_buffer_size   = 16M
+innodb_flush_log_at_trx_commit = 2     # slightly less durable, much faster
+innodb_flush_method      = O_DIRECT    # skip OS page cache double-buffering
+
+# Connections
+max_connections          = 150
+thread_cache_size        = 16
+wait_timeout             = 60
+interactive_timeout      = 60
+
+# Temp tables / sorting
+tmp_table_size           = 64M
+max_heap_table_size      = 64M
+sort_buffer_size         = 2M
+join_buffer_size         = 2M
+
+# Slow query log — helps diagnose slow WP plugins
+slow_query_log           = 1
+slow_query_log_file      = /var/lib/mysql/slow.log
+long_query_time          = 2
+log_queries_not_using_indexes = 0
+
+# Binary log (disable if replication not needed — saves IO)
+skip_log_bin
+
+[client]
+default-character-set    = utf8mb4

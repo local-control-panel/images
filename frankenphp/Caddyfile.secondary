@@ -1,0 +1,8 @@
+{
+    # Global options
+    admin off
+    persist_config off
+}
+
+# Import per-site Caddyfiles managed by the control panel
+import /etc/frankenphp/Caddyfile.d/*.caddyfile
