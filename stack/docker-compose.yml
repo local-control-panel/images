@@ -52,14 +52,15 @@ services:
       start_period: 15s
 
   # ── Secondary PHP version containers ─────────────────────────────────────
-  # These handle sites that require a different PHP version than the default (8.3).
+  # Handle sites that require a different PHP version than the default (8.3).
   # The main frankenphp container reverse-proxies to them by domain.
-  # They are safe to leave running even when unused — idle FrankenPHP uses <10MB RAM.
+  # Started on demand via --profile php-8.X — not running by default.
 
   frankenphp-8.1:
     image: dunglas/frankenphp:${FRANKENPHP_VERSION:-1}-php8.1-alpine
     container_name: frankenphp-8.1
     restart: unless-stopped
+    profiles: ["php-8.1"]
     volumes:
       - ../frankenphp/Caddyfile.secondary:/etc/caddy/Caddyfile:ro
       - ../frankenphp/php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
@@ -78,6 +79,7 @@ services:
     image: dunglas/frankenphp:${FRANKENPHP_VERSION:-1}-php8.2-alpine
     container_name: frankenphp-8.2
     restart: unless-stopped
+    profiles: ["php-8.2"]
     volumes:
       - ../frankenphp/Caddyfile.secondary:/etc/caddy/Caddyfile:ro
       - ../frankenphp/php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
@@ -96,6 +98,7 @@ services:
     image: dunglas/frankenphp:${FRANKENPHP_VERSION:-1}-php8.4-alpine
     container_name: frankenphp-8.4
     restart: unless-stopped
+    profiles: ["php-8.4"]
     volumes:
       - ../frankenphp/Caddyfile.secondary:/etc/caddy/Caddyfile:ro
       - ../frankenphp/php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
