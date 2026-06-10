@@ -1,0 +1,38 @@
+# WAF request matchers — translated from 7G/8G Nginx firewall rules.
+# These block SQL injection, directory traversal, malicious UAs, and bad query strings.
+#
+# USAGE: Copy the relevant @waf-* matchers and respond directives into your site block,
+# or activate this file as a global snippet by importing it.
+#
+# Test thoroughly before activating in production — some patterns may need tuning
+# for your specific WordPress plugins.
+
+# ── Bad query string patterns (SQL injection, eval, traversal) ───────────────
+@waf-bad-querystring {
+    query_regexp (?i)(union.*select|select.*from|insert.*into|drop.*table)
+    query_regexp (?i)(eval\(|base64_decode|system\(|exec\()
+    query_regexp (?i)(\.\./|\.\.%2f|%2e%2e/)
+    query_regexp (?i)(onmouseover|onerror|onload|javascript:)
+}
+# respond @waf-bad-querystring 403
+
+# ── Bad URI patterns (shell upload probes, config file access) ────────────────
+@waf-bad-uri {
+    path_regexp (?i)\.(git|svn|env|htaccess|htpasswd|bak|sql|log|conf)$
+    path_regexp (?i)(wp-config\.php\.bak|\.env\.prod|autodiscover\.xml)
+    path_regexp (?i)(shell|c99|r57|hacktools?|wso|webshell)
+}
+# respond @waf-bad-uri 403
+
+# ── Malicious user agents ─────────────────────────────────────────────────────
+@waf-bad-ua {
+    header_regexp User-Agent (?i)(sqlmap|nikto|masscan|zmeu|morfeus|jaascois|paros|nessus|openvas)
+    header_regexp User-Agent (?i)(wget.*eval|curl.*eval|python.*requests.*base64)
+    header_regexp User-Agent (?i)(wordpress hash grabber|casper|ips-agent)
+}
+# respond @waf-bad-ua 403
+
+# ── Activate all WAF rules (uncomment to enable) ──────────────────────────────
+# respond @waf-bad-querystring 403
+# respond @waf-bad-uri 403
+# respond @waf-bad-ua 403

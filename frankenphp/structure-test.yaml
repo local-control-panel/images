@@ -1,0 +1,101 @@
+# Container Structure Tests for the wcp/frankenphp image.
+# Run after building:
+#   container-structure-test test \
+#     --image wcp/frankenphp:1-php8.3 \
+#     --config frankenphp/structure-test.yaml
+#
+# Install container-structure-test:
+#   https://github.com/GoogleContainerTools/container-structure-test
+
+schemaVersion: "2.0.0"
+
+commandTests:
+  - name: "wp-cli is callable"
+    command: "wp"
+    args: ["--version"]
+    exitCode: 0
+
+  - name: "wp-cli runs without --allow-root error"
+    command: "wp"
+    args: ["--info", "--allow-root"]
+    exitCode: 0
+
+  - name: "redis extension loaded"
+    command: "php"
+    args: ["-r", "echo extension_loaded('redis') ? 'ok' : 'missing';"]
+    expectedOutput: ["ok"]
+    exitCode: 0
+
+  - name: "opcache extension loaded"
+    command: "php"
+    args: ["-r", "echo extension_loaded('Zend OPcache') ? 'ok' : 'missing';"]
+    expectedOutput: ["ok"]
+    exitCode: 0
+
+  - name: "imagick extension loaded"
+    command: "php"
+    args: ["-r", "echo extension_loaded('imagick') ? 'ok' : 'missing';"]
+    expectedOutput: ["ok"]
+    exitCode: 0
+
+  - name: "intl extension loaded"
+    command: "php"
+    args: ["-r", "echo extension_loaded('intl') ? 'ok' : 'missing';"]
+    expectedOutput: ["ok"]
+    exitCode: 0
+
+  - name: "pdo_mysql extension loaded"
+    command: "php"
+    args: ["-r", "echo extension_loaded('pdo_mysql') ? 'ok' : 'missing';"]
+    expectedOutput: ["ok"]
+    exitCode: 0
+
+  - name: "msmtp binary present"
+    command: "msmtp"
+    args: ["--version"]
+    exitCode: 0
+
+  - name: "mysql client present"
+    command: "mysql"
+    args: ["--version"]
+    exitCode: 0
+
+  - name: "imagemagick present"
+    command: "convert"
+    args: ["-version"]
+    exitCode: 0
+
+fileExistenceTests:
+  - name: "Caddyfile present"
+    path: "/etc/caddy/Caddyfile"
+    shouldExist: true
+
+  - name: "wp-performance.ini present"
+    path: "/usr/local/etc/php/conf.d/wp-performance.ini"
+    shouldExist: true
+
+  - name: "Caddyfile.d directory present"
+    path: "/etc/frankenphp/Caddyfile.d"
+    shouldExist: true
+    isDirectory: true
+
+  - name: "wp binary is a wrapper script (not a phar)"
+    path: "/usr/local/bin/wp"
+    shouldExist: true
+
+  - name: "wp.phar present"
+    path: "/usr/local/bin/wp.phar"
+    shouldExist: true
+
+fileContentTests:
+  - name: "expose_php is Off"
+    path: "/usr/local/etc/php/conf.d/wp-performance.ini"
+    expectedContents: ["expose_php.*=.*Off"]
+
+  - name: "OPcache is enabled"
+    path: "/usr/local/etc/php/conf.d/wp-performance.ini"
+    expectedContents: ["opcache.enable.*=.*1"]
+
+  - name: "wp wrapper calls --allow-root"
+    path: "/usr/local/bin/wp"
+    expectedContents: ["--allow-root"]

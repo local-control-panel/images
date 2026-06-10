@@ -7,6 +7,7 @@
  *   node docker/build.mjs              # build all services
  *   node docker/build.mjs frankenphp   # build one service
  *   node docker/build.mjs --list       # print what would be built
+ *   node docker/build.mjs --check     # check Docker Hub for available updates
  *
  * The script reads versions from docker/versions.json and writes a
  * docker/built-images.json manifest so the app knows which local images exist.
@@ -78,13 +79,13 @@ const BUILDS = [
       VALKEY_VERSION: v.valkey.version,
     },
   },
-  // postgres: no custom Dockerfile — note the official image in the manifest
   {
     name: "postgres",
-    context: null,
-    tag: `postgres:${v.postgres.version}-alpine`,
-    buildArgs: {},
-    official: true,
+    context: join(__dir, "postgres"),
+    tag: `wcp/postgres:${v.postgres.version}`,
+    buildArgs: {
+      POSTGRES_VERSION: v.postgres.version,
+    },
   },
 ];
 
@@ -94,6 +95,15 @@ const args = process.argv.slice(2);
 const listOnly = args.includes("--list");
 const force = args.includes("--force");
 const targets = args.filter((a) => !a.startsWith("--"));
+
+const checkOnly = args.includes("--check");
+if (checkOnly) {
+  const { join: pathJoin } = await import("path");
+  const checkScript = join(__dir, ".github/scripts/check-docker-versions.mjs");
+  process.env.DRY_RUN = "true";
+  const result = spawnSync("node", [checkScript], { stdio: "inherit", env: { ...process.env, DRY_RUN: "true" } });
+  process.exit(result.status ?? 0);
+}
 
 const builds = targets.length
   ? BUILDS.filter((b) => targets.includes(b.name))

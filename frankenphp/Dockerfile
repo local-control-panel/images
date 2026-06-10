@@ -6,11 +6,12 @@ FROM dunglas/frankenphp:${FRANKENPHP_VERSION}-php${PHP_VERSION}
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY php.ini /usr/local/etc/php/conf.d/wp-performance.ini
 
-# Create expected directories
-RUN mkdir -p /etc/frankenphp/Caddyfile.d /var/www /var/log/caddy
+# ── Entrypoint helpers ───────────────────────────────────────────────────────
+COPY docker-entrypoint.d/ /docker-entrypoint.d/
+RUN chmod +x /docker-entrypoint.d/10-msmtp.sh
 
-# ── Composer ────────────────────────────────────────────────────────────────
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Create expected directories
+RUN mkdir -p /etc/frankenphp/Caddyfile.d /etc/msmtprc.d /var/www /var/log/caddy
 
 # ── System packages ─────────────────────────────────────────────────────────
 # Grouped into a single apt run to keep layers clean and the package index
@@ -22,11 +23,16 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 #   optipng     → lossless PNG optimisation
 #   webp        → cwebp / dwebp / img2webp (WebP encode+decode)
 #
-# General WordPress / dev tools:
+# General WordPress tools:
 #   default-mysql-client → mysql / mysqldump (works against MariaDB too)
 #   git                  → Composer VCS packages + WP-CLI internals
 #   less                 → WP-CLI interactive paging
+#   msmtp / msmtp-mta    → sendmail drop-in; config generated at runtime
+#                          by /docker-entrypoint.d/10-msmtp.sh
 #   unzip                → WordPress plugin / theme installation
+#
+# Dev tools (Composer, Node.js, pnpm) live in Dockerfile.dev to keep
+# this production image lean.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         curl \
@@ -35,40 +41,57 @@ RUN apt-get update \
         imagemagick \
         less \
         libavif-bin \
+        msmtp \
+        msmtp-mta \
         optipng \
         unzip \
         webp \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
-    && npm install -g pnpm \
     && rm -rf /var/lib/apt/lists/*
 
 # ── PHP extensions ───────────────────────────────────────────────────────────
 # install-php-extensions (bundled in FrankenPHP) auto-handles every apt
 # dependency, so no manual -dev package dance is needed.
 #
-#   bcmath   → arbitrary-precision math (many WP plugins / WooCommerce)
-#   exif     → reads EXIF metadata from uploaded images
-#   gd       → built-in WordPress image editor fallback
-#   imagick  → preferred WordPress image editor (ImageMagick binding)
-#   intl     → Unicode / locale support (Polylang, WPML, etc.)
-#   opcache  → bytecode cache — critical for PHP performance
-#   redis    → Redis / Valkey object-cache support
-#   zip      → ZIP read/write (plugin & theme installs, backup plugins)
+#   bcmath     → arbitrary-precision math (many WP plugins / WooCommerce)
+#   excimer    → low-overhead sampling profiler (required by Query Monitor etc.)
+#   exif       → reads EXIF metadata from uploaded images
+#   gd         → built-in WordPress image editor fallback
+#   imagick    → preferred WordPress image editor (ImageMagick binding)
+#   intl       → Unicode / locale support (Polylang, WPML, etc.)
+#   pcntl      → process control (used by WP-CLI, queue workers)
+#   pdo_mysql  → PDO driver for MySQL / MariaDB
+#   pdo_pgsql  → PDO driver for PostgreSQL
+#   redis-6.2.0 → Redis / Valkey object-cache support (pinned for reproducibility)
+#   sockets    → low-level socket API (required by some queue / async plugins)
+#   zip        → ZIP read/write (plugin & theme installs, backup plugins)
+#
+# NOTE: opcache is already compiled into the FrankenPHP base image.
+# NOTE: relay (high-perf Redis client) is omitted — commercial license
+#       required for production; see cachewerk.com
+#
+# relay    # high-perf Redis client — commercial license required for production; see cachewerk.com
 RUN install-php-extensions \
     bcmath \
+    excimer \
     exif \
     gd \
     imagick \
     intl \
-    opcache \
-    redis \
+    pcntl \
+    pdo_mysql \
+    pdo_pgsql \
+    redis-6.2.0 \
+    sockets \
     zip
 
 # ── WP-CLI ──────────────────────────────────────────────────────────────────
 # php --info verifies the phar is valid before it is moved into place.
+# A wrapper script adds --allow-root automatically so WP-CLI works when the
+# container runs as root (FrankenPHP default).
 RUN curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
         -o /tmp/wp-cli.phar \
     && php /tmp/wp-cli.phar --info \
-    && mv /tmp/wp-cli.phar /usr/local/bin/wp \
-    && chmod +x /usr/local/bin/wp
+    && mv /tmp/wp-cli.phar /usr/local/bin/wp.phar \
+    && printf '#!/bin/sh\nexec /usr/local/bin/wp.phar --allow-root "$@"\n' > /usr/local/bin/wp \
+    && chmod +x /usr/local/bin/wp.phar /usr/local/bin/wp \
+    && wp package install wp-cli/doctor-command --allow-root

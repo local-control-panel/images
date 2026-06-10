@@ -1,0 +1,17 @@
+ARG FRANKENPHP_VERSION=1
+ARG PHP_VERSION=8.3
+FROM ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION}-php${PHP_VERSION} AS dev
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        git \
+        make \
+        vim \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && npm install -g pnpm \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN install-php-extensions xdebug pcov

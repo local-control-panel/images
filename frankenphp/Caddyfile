@@ -3,6 +3,10 @@
     admin off
     persist_config off
 
+    servers {
+        max_request_body_size 128MB
+    }
+
     frankenphp {
         worker /var/www/html/index.php {$FRANKENPHP_WORKER_PROCESSES:4}
     }

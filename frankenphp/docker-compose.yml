@@ -1,6 +1,6 @@
 services:
   frankenphp:
-    image: dunglas/frankenphp:${FRANKENPHP_VERSION:-1}-php${PHP_VERSION:-8.3}-alpine
+    image: dunglas/frankenphp:${FRANKENPHP_VERSION:-1}-php${PHP_VERSION:-8.3}
     container_name: frankenphp
     restart: unless-stopped
     env_file:

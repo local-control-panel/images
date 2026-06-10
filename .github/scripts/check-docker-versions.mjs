@@ -80,7 +80,7 @@ async function latestFrankenPhpVersion(currentVersion) {
   const phpVersions = new Set();
 
   for (const t of tags) {
-    const m = t.name.match(/^[\d.]+-php(\d+\.\d+)-alpine$/);
+    const m = t.name.match(/^[\d.]+-php(\d+\.\d+)$/);
     if (!m) continue;
     const images = t.images ?? [];
     const hasAmd64 = images.some((i) => i.architecture === "amd64" && i.os === "linux");
@@ -89,7 +89,7 @@ async function latestFrankenPhpVersion(currentVersion) {
   }
 
   const frankenVersions = tags
-    .filter((t) => /^[\d.]+-php\d+\.\d+-alpine$/.test(t.name))
+    .filter((t) => /^[\d.]+-php\d+\.\d+$/.test(t.name))
     .map((t) => t.name.split("-")[0])
     .filter((v) => /^\d+(\.\d+)*$/.test(v));
 

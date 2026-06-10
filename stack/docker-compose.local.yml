@@ -30,4 +30,4 @@ services:
       - valkey_data:/data
 
   postgres:
-    image: ${WCP_POSTGRES_IMAGE:-postgres:17-alpine}
+    image: ${WCP_POSTGRES_IMAGE:-wcp/postgres:17}

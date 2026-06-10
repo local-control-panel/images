@@ -1,0 +1,67 @@
+# WordPress site template — copy to <domain>.caddyfile and replace example.com
+# with your domain. Review each section before activating.
+
+example.com {
+    root * /var/www/html
+
+    # ── Compression ──────────────────────────────────────────────────────────
+    encode zstd br gzip
+
+    # ── Security: response headers ────────────────────────────────────────────
+    header {
+        Strict-Transport-Security  "max-age=31536000; includeSubDomains; preload"
+        X-Frame-Options            "SAMEORIGIN"
+        X-Content-Type-Options     "nosniff"
+        Referrer-Policy            "strict-origin-when-cross-origin"
+        X-XSS-Protection           "1; mode=block"
+        -X-Powered-By
+        -Link
+    }
+
+    # ── Security: block PHP execution in uploads ──────────────────────────────
+    @php-in-uploads path_regexp php-uploads /wp-content/uploads/.*\.php$
+    respond @php-in-uploads 403
+
+    # ── Security: disable XML-RPC ─────────────────────────────────────────────
+    @xmlrpc path /xmlrpc.php
+    respond @xmlrpc 403
+    header -X-Pingback
+
+    # ── Security: block dangerous HTTP methods ────────────────────────────────
+    @dangerous-methods method CONNECT DEBUG MOVE TRACE TRACK
+    respond @dangerous-methods 405
+
+    # ── Security: wp-login rate limit ─────────────────────────────────────────
+    # Uncomment if caddy-ratelimit module is compiled in:
+    # @wp-login path /wp-login.php
+    # rate_limit @wp-login 10r/m
+
+    # ── Static assets: long-term caching ─────────────────────────────────────
+    @static {
+        path_regexp static \.(css|js|jpg|jpeg|png|gif|svg|ico|woff|woff2|ttf|eot|webp|avif|pdf)$
+    }
+    header @static Cache-Control "public, max-age=31536000, immutable"
+
+    # ── Full-page cache (Souin) ───────────────────────────────────────────────
+    # Requires FrankenPHP built with the Souin Caddy module. When enabled,
+    # public pages are served from Valkey without hitting PHP workers.
+    #
+    # cache {
+    #     ttl 1h
+    #     stale 24h
+    #     nuts {
+    #         path /tmp/souin-nuts
+    #     }
+    # }
+    #
+    # WooCommerce cache bypass — add if cache module is active:
+    # @no-cache {
+    #     path /wp-admin* /wp-login.php /wp-json* /wp-cron.php
+    #     path /cart /checkout /my-account*
+    #     header_regexp Cookie "wordpress_logged_in_|woocommerce_items_in_cart|woocommerce_cart_hash"
+    # }
+    # header @no-cache Cache-Control "no-store, private"
+
+    # ── PHP handler ───────────────────────────────────────────────────────────
+    php_server
+}

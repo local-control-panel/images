@@ -34,5 +34,16 @@ log_queries_not_using_indexes = 0
 # Binary log (disable if replication not needed — saves IO)
 skip_log_bin
 
+# Performance schema
+# Disable performance_schema — saves ~250MB RAM; use slow query log for diagnostics instead
+performance_schema       = OFF
+
+# InnoDB I/O parallelism — raise from default 4 on multi-core VPS
+innodb_read_io_threads   = 8
+innodb_write_io_threads  = 8
+
+# Random read buffer — helps full-table scans on wp_options and wp_postmeta
+read_rnd_buffer_size     = 4M
+
 [client]
 default-character-set    = utf8mb4

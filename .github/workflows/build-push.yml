@@ -7,6 +7,7 @@ on:
       - "frankenphp/**"
       - "mariadb/**"
       - "valkey/**"
+      - "postgres/**"
       - "versions.json"
   workflow_dispatch:
 
@@ -23,6 +24,7 @@ jobs:
       frankenphp_php_default: ${{ steps.v.outputs.frankenphp_php_default }}
       mariadb: ${{ steps.v.outputs.mariadb }}
       valkey: ${{ steps.v.outputs.valkey }}
+      postgres: ${{ steps.v.outputs.postgres }}
     steps:
       - uses: actions/checkout@v5
 
@@ -34,6 +36,7 @@ jobs:
           echo "frankenphp_php_default=$(jq -r '.images.frankenphp.phpDefault' versions.json)" >> $GITHUB_OUTPUT
           echo "mariadb=$(jq -r '.images.mariadb.version' versions.json)" >> $GITHUB_OUTPUT
           echo "valkey=$(jq -r '.images.valkey.version' versions.json)" >> $GITHUB_OUTPUT
+          echo "postgres=$(jq -r '.images.postgres.version' versions.json)" >> $GITHUB_OUTPUT
 
   frankenphp:
     needs: versions
@@ -125,3 +128,29 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/valkey:latest
           cache-from: type=gha,scope=valkey
           cache-to: type=gha,mode=max,scope=valkey
+
+  postgres:
+    needs: versions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: ./postgres
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: POSTGRES_VERSION=${{ needs.versions.outputs.postgres }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/postgres:${{ needs.versions.outputs.postgres }}
+            ghcr.io/${{ github.repository_owner }}/postgres:latest
+          cache-from: type=gha,scope=postgres
+          cache-to: type=gha,mode=max,scope=postgres
