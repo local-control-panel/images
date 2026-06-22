@@ -87,6 +87,14 @@ const BUILDS = [
       POSTGRES_VERSION: v.postgres.version,
     },
   },
+  {
+    name: "meilisearch",
+    context: join(__dir, "meilisearch"),
+    tag: `wcp/meilisearch:${v.meilisearch.version}`,
+    buildArgs: {
+      MEILISEARCH_VERSION: v.meilisearch.version,
+    },
+  },
 ];
 
 // ── CLI args ──────────────────────────────────────────────────────────────────

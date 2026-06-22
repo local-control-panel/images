@@ -10,6 +10,7 @@ Custom Docker images for the WCP hosting stack — each one is a thin wrapper ar
 | `mariadb` | `mariadb` | MariaDB with performance-tuned `conf.d` |
 | `valkey` | `valkey/valkey` | Redis-compatible object cache |
 | `postgres` | `postgres` | PostgreSQL (official image, no custom build) |
+| `meilisearch` | `getmeili/meilisearch` | Lightweight full-text search engine (Elasticsearch alternative) |
 
 All images are built for `linux/amd64` and `linux/arm64` (Apple Silicon, AWS Graviton, Raspberry Pi).
 
@@ -55,6 +56,7 @@ Images are automatically built and pushed to GitHub Container Registry on every 
 docker pull ghcr.io/local-control-panel/frankenphp:1-php8.3
 docker pull ghcr.io/local-control-panel/mariadb:11.4
 docker pull ghcr.io/local-control-panel/valkey:8
+docker pull ghcr.io/local-control-panel/meilisearch:1.13
 ```
 
 ## Version management

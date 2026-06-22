@@ -1,0 +1,36 @@
+services:
+  meilisearch:
+    image: ghcr.io/local-control-panel/meilisearch:${MEILISEARCH_VERSION:-1.13}
+    container_name: meilisearch
+    restart: unless-stopped
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_MASTER_KEY:?required}
+      MEILI_ENV: production
+      MEILI_DB_PATH: /meili_data
+    volumes:
+      - meilisearch_data:/meili_data
+    networks:
+      - backend
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  meilisearch_data:
+
+networks:
+  backend:
+    external: true
+    name: wp-backend
