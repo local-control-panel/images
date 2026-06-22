@@ -15,7 +15,10 @@ innodb_flush_method      = O_DIRECT    # skip OS page cache double-buffering
 
 # Connections
 max_connections          = 150
+max_allowed_packet       = 128M      # supports large plugin/theme SQL imports (default 16M is too small)
 thread_cache_size        = 16
+table_open_cache         = 1024      # reduce from default 4000 to save memory on small VPS
+table_definition_cache   = 512
 wait_timeout             = 60
 interactive_timeout      = 60
 
@@ -41,6 +44,8 @@ performance_schema       = OFF
 # InnoDB I/O parallelism — raise from default 4 on multi-core VPS
 innodb_read_io_threads   = 8
 innodb_write_io_threads  = 8
+innodb_file_per_table    = ON        # each table in its own .ibd file — DROP TABLE doesn't lock tablespace
+innodb_stats_on_metadata = OFF       # faster SHOW TABLE STATUS / INFORMATION_SCHEMA queries
 
 # Random read buffer — helps full-table scans on wp_options and wp_postmeta
 read_rnd_buffer_size     = 4M

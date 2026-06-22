@@ -14,9 +14,18 @@ example.com {
         X-Content-Type-Options     "nosniff"
         Referrer-Policy            "strict-origin-when-cross-origin"
         X-XSS-Protection           "1; mode=block"
+        # Tune CSP per site — the default below is safe for most WordPress installs
+        Content-Security-Policy    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; frame-ancestors 'self'"
+        Permissions-Policy         "geolocation=(), microphone=(), camera=(), usb=(), payment=()"
         -X-Powered-By
         -Link
     }
+
+    # ── Security: block sensitive file access ─────────────────────────────────
+    @protected {
+        path /.htaccess /.htpasswd /wp-config.php /wp-config.*.php /wp-config.*.bak /readme.html /license.txt
+    }
+    respond @protected 403
 
     # ── Security: block PHP execution in uploads ──────────────────────────────
     @php-in-uploads path_regexp php-uploads /wp-content/uploads/.*\.php$
