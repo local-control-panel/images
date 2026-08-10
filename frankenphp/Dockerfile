@@ -96,7 +96,7 @@ RUN curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-
     && mv /tmp/wp-cli.phar /usr/local/bin/wp.phar \
     && printf '#!/bin/sh\nexec /usr/local/bin/wp.phar --allow-root "$@"\n' > /usr/local/bin/wp \
     && chmod +x /usr/local/bin/wp.phar /usr/local/bin/wp \
-    && wp package install wp-cli/doctor-command:2.3.1 --allow-root
+    && for i in 1 2 3; do wp package install wp-cli/doctor-command:2.3.1 --allow-root && break || sleep 5; [ "$i" = 3 ] && exit 1; done
 
 # Fail an image build immediately if its platform Caddy configuration is
 # invalid. Per-application Caddyfiles are mounted at runtime and are validated
