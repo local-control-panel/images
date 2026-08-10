@@ -42,16 +42,76 @@ jobs:
           echo "postgres=$(jq -r '.images.postgres.version' versions.json)" >> $GITHUB_OUTPUT
           echo "meilisearch=$(jq -r '.images.meilisearch.version' versions.json)" >> $GITHUB_OUTPUT
 
-  frankenphp:
+  # Built natively per-platform (no QEMU) and merged into one manifest below,
+  # since arm64 under QEMU emulation is 5-10x slower for compiling PHP
+  # extensions than running on a real arm64 runner.
+  frankenphp-build:
     needs: versions
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         php: ${{ fromJson(needs.versions.outputs.frankenphp_php_versions) }}
+        platform: [linux/amd64, linux/arm64]
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7
-      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Platform slug
+        run: echo "PLATFORM_SLUG=${PLATFORM/\//-}" >> "$GITHUB_ENV"
+        env:
+          PLATFORM: ${{ matrix.platform }}
+
+      - uses: docker/build-push-action@v7
+        id: build
+        with:
+          context: ./frankenphp
+          platforms: ${{ matrix.platform }}
+          build-args: |
+            FRANKENPHP_VERSION=${{ needs.versions.outputs.frankenphp }}
+            PHP_VERSION=${{ matrix.php }}
+          outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/frankenphp,push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=frankenphp-${{ matrix.php }}-${{ env.PLATFORM_SLUG }}
+          cache-to: type=gha,mode=max,scope=frankenphp-${{ matrix.php }}-${{ env.PLATFORM_SLUG }}
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.php }}-${{ env.PLATFORM_SLUG }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  frankenphp-merge:
+    needs: [versions, frankenphp-build]
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ${{ fromJson(needs.versions.outputs.frankenphp_php_versions) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-${{ matrix.php }}-*
+          merge-multiple: true
+
       - uses: docker/setup-buildx-action@v4
 
       - uses: docker/login-action@v4
@@ -69,18 +129,12 @@ jobs:
           fi
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
-      - uses: docker/build-push-action@v7
-        id: build-frankenphp
-        with:
-          context: ./frankenphp
-          platforms: linux/amd64,linux/arm64
-          push: true
-          build-args: |
-            FRANKENPHP_VERSION=${{ needs.versions.outputs.frankenphp }}
-            PHP_VERSION=${{ matrix.php }}
-          tags: ${{ steps.tags.outputs.tags }}
-          cache-from: type=gha,scope=frankenphp-${{ matrix.php }}
-          cache-to: type=gha,mode=max,scope=frankenphp-${{ matrix.php }}
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create \
+            $(echo "${{ steps.tags.outputs.tags }}" | tr ',' '\n' | sed 's/^/--tag /' | tr '\n' ' ') \
+            $(printf 'ghcr.io/${{ github.repository_owner }}/frankenphp@sha256:%s ' *)
 
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -100,8 +154,6 @@ jobs:
     needs: versions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
 
       - uses: docker/login-action@v4
@@ -110,18 +162,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/build-push-action@v7
-        id: build-mariadb
-        with:
-          context: ./mariadb
-          platforms: linux/amd64,linux/arm64
-          push: true
-          build-args: MARIADB_VERSION=${{ needs.versions.outputs.mariadb }}
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/mariadb:${{ needs.versions.outputs.mariadb }}
-            ghcr.io/${{ github.repository_owner }}/mariadb:latest
-          cache-from: type=gha,scope=mariadb
-          cache-to: type=gha,mode=max,scope=mariadb
+      # No custom Dockerfile — config is delivered via bind mount at runtime
+      # (see mariadb/docker-compose.yml), so we just re-tag the upstream
+      # multi-arch image under our fixed ghcr.io tag instead of rebuilding it.
+      - name: Re-tag upstream image
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/${{ github.repository_owner }}/mariadb:${{ needs.versions.outputs.mariadb }} \
+            --tag ghcr.io/${{ github.repository_owner }}/mariadb:latest \
+            mariadb:${{ needs.versions.outputs.mariadb }}
 
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -141,8 +190,6 @@ jobs:
     needs: versions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
 
       - uses: docker/login-action@v4
@@ -151,18 +198,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/build-push-action@v7
-        id: build-valkey
-        with:
-          context: ./valkey
-          platforms: linux/amd64,linux/arm64
-          push: true
-          build-args: VALKEY_VERSION=${{ needs.versions.outputs.valkey }}
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/valkey:${{ needs.versions.outputs.valkey }}
-            ghcr.io/${{ github.repository_owner }}/valkey:latest
-          cache-from: type=gha,scope=valkey
-          cache-to: type=gha,mode=max,scope=valkey
+      # No custom Dockerfile — config is delivered via bind mount at runtime
+      # (see valkey/docker-compose.yml), so we just re-tag the upstream
+      # multi-arch image under our fixed ghcr.io tag instead of rebuilding it.
+      - name: Re-tag upstream image
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/${{ github.repository_owner }}/valkey:${{ needs.versions.outputs.valkey }} \
+            --tag ghcr.io/${{ github.repository_owner }}/valkey:latest \
+            valkey/valkey:${{ needs.versions.outputs.valkey }}-alpine
 
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -182,8 +226,6 @@ jobs:
     needs: versions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
 
       - uses: docker/login-action@v4
@@ -192,18 +234,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/build-push-action@v7
-        id: build-postgres
-        with:
-          context: ./postgres
-          platforms: linux/amd64,linux/arm64
-          push: true
-          build-args: POSTGRES_VERSION=${{ needs.versions.outputs.postgres }}
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/postgres:${{ needs.versions.outputs.postgres }}
-            ghcr.io/${{ github.repository_owner }}/postgres:latest
-          cache-from: type=gha,scope=postgres
-          cache-to: type=gha,mode=max,scope=postgres
+      # No custom Dockerfile — config is delivered via bind mount at runtime
+      # (see postgres/docker-compose.yml), so we just re-tag the upstream
+      # multi-arch image under our fixed ghcr.io tag instead of rebuilding it.
+      - name: Re-tag upstream image
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/${{ github.repository_owner }}/postgres:${{ needs.versions.outputs.postgres }} \
+            --tag ghcr.io/${{ github.repository_owner }}/postgres:latest \
+            postgres:${{ needs.versions.outputs.postgres }}-alpine
 
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
@@ -223,8 +262,6 @@ jobs:
     needs: versions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
 
       - uses: docker/login-action@v4
@@ -233,18 +270,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/build-push-action@v7
-        id: build-meilisearch
-        with:
-          context: ./meilisearch
-          platforms: linux/amd64,linux/arm64
-          push: true
-          build-args: MEILISEARCH_VERSION=${{ needs.versions.outputs.meilisearch }}
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/meilisearch:${{ needs.versions.outputs.meilisearch }}
-            ghcr.io/${{ github.repository_owner }}/meilisearch:latest
-          cache-from: type=gha,scope=meilisearch
-          cache-to: type=gha,mode=max,scope=meilisearch
+      # No custom Dockerfile — nothing to bake in beyond the healthcheck,
+      # which lives in compose. Just re-tag the upstream multi-arch image
+      # under our fixed ghcr.io tag instead of rebuilding it.
+      - name: Re-tag upstream image
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/${{ github.repository_owner }}/meilisearch:${{ needs.versions.outputs.meilisearch }} \
+            --tag ghcr.io/${{ github.repository_owner }}/meilisearch:latest \
+            getmeili/meilisearch:v${{ needs.versions.outputs.meilisearch }}
 
       - uses: aquasecurity/trivy-action@v0.36.0
         with:

@@ -28,7 +28,7 @@
       "tagPattern": "{version}",
       "platforms": ["linux/amd64", "linux/arm64"],
       "registryUrl": "https://hub.docker.com/v2/repositories/library/postgres/tags",
-      "notes": "Custom image with postgresql.conf tuning baked in. Alpine base. Supports amd64 and arm64."
+      "notes": "Re-tagged upstream image; postgresql.conf tuning is bind-mounted at runtime. Alpine base. Supports amd64 and arm64."
     },
     "valkey": {
       "image": "valkey/valkey",
