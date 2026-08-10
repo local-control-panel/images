@@ -1,6 +1,8 @@
 services:
   frankenphp:
-    image: dunglas/frankenphp:${FRANKENPHP_VERSION:-1}-php${PHP_VERSION:-8.3}
+    # Our GHCR image contains the PHP extensions, WP-CLI, entrypoint helpers
+    # and Caddy platform configuration defined in this repository.
+    image: ${WCP_FRANKENPHP_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php${PHP_VERSION:-8.3}}
     container_name: frankenphp
     restart: unless-stopped
     env_file:
@@ -19,12 +21,11 @@ services:
       - /var/www:/var/www
       - /var/log/caddy:/var/log/caddy
     environment:
-      SERVER_NAME: ${SERVER_NAME:-:80}
-      FRANKENPHP_WORKER_PROCESSES: ${WORKER_PROCESSES:-4}
+      # off | cloudflare | private. See caddy-global/trusted-proxies/.
+      CADDY_TRUSTED_PROXIES: ${CADDY_TRUSTED_PROXIES:-off}
+      CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
     networks:
       - backend
-    cap_add:
-      - NET_ADMIN   # required for HTTP/3
     deploy:
       resources:
         limits:
@@ -34,7 +35,7 @@ services:
           cpus: "0.5"
           memory: 256M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/up"]
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://localhost/healthcheck"]
       interval: 30s
       timeout: 5s
       retries: 3

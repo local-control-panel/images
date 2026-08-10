@@ -1,0 +1,5 @@
+# Use only when every direct peer is a trusted private reverse proxy. Do not
+# enable this on a network where arbitrary containers can reach FrankenPHP.
+trusted_proxies static private_ranges
+trusted_proxies_strict
+client_ip_headers X-Forwarded-For X-Real-IP

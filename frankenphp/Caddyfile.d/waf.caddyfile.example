@@ -1,38 +1,24 @@
-# WAF request matchers — translated from 7G/8G Nginx firewall rules.
-# These block SQL injection, directory traversal, malicious UAs, and bad query strings.
+# Optional, deliberately narrow WAF snippet for one application site.
 #
-# USAGE: Copy the relevant @waf-* matchers and respond directives into your site block,
-# or activate this file as a global snippet by importing it.
-#
-# Test thoroughly before activating in production — some patterns may need tuning
-# for your specific WordPress plugins.
+# Copy the rules you need inside that site's block, before `php_server`, and
+# test its normal login, checkout, API and plugin traffic before enabling it.
+# This is a low-cost safety net, not a replacement for a maintained WAF/CDN.
+# Every matcher below is independent: one match is enough to return 403.
 
-# ── Bad query string patterns (SQL injection, eval, traversal) ───────────────
-@waf-bad-querystring {
-    query_regexp (?i)(union.*select|select.*from|insert.*into|drop.*table)
-    query_regexp (?i)(eval\(|base64_decode|system\(|exec\()
-    query_regexp (?i)(\.\./|\.\.%2f|%2e%2e/)
-    query_regexp (?i)(onmouseover|onerror|onload|javascript:)
-}
-# respond @waf-bad-querystring 403
+# Block common source and backup-file probes.
+@waf-sensitive-extension path_regexp waf_sensitive_extension (?i)\.(git|svn|env|htaccess|htpasswd|bak|sql|log|conf)$
+respond @waf-sensitive-extension 403
 
-# ── Bad URI patterns (shell upload probes, config file access) ────────────────
-@waf-bad-uri {
-    path_regexp (?i)\.(git|svn|env|htaccess|htpasswd|bak|sql|log|conf)$
-    path_regexp (?i)(wp-config\.php\.bak|\.env\.prod|autodiscover\.xml)
-    path_regexp (?i)(shell|c99|r57|hacktools?|wso|webshell)
-}
-# respond @waf-bad-uri 403
+@waf-webshell-path path_regexp waf_webshell_path (?i)(shell|c99|r57|hacktools?|wso|webshell)
+respond @waf-webshell-path 403
 
-# ── Malicious user agents ─────────────────────────────────────────────────────
-@waf-bad-ua {
-    header_regexp User-Agent (?i)(sqlmap|nikto|masscan|zmeu|morfeus|jaascois|paros|nessus|openvas)
-    header_regexp User-Agent (?i)(wget.*eval|curl.*eval|python.*requests.*base64)
-    header_regexp User-Agent (?i)(wordpress hash grabber|casper|ips-agent)
-}
-# respond @waf-bad-ua 403
+# Block a small set of reconnaissance tools. Do not block curl, Python or
+# generic browser strings: legitimate integrations use them.
+@waf-scanner header_regexp waf_scanner User-Agent (?i)(sqlmap|nikto|masscan|zmeu|morfeus|jaascois|paros|nessus|openvas)
+respond @waf-scanner 403
 
-# ── Activate all WAF rules (uncomment to enable) ──────────────────────────────
-# respond @waf-bad-querystring 403
-# respond @waf-bad-uri 403
-# respond @waf-bad-ua 403
+# Query-string probes. This is a single CEL matcher so its alternatives are
+# OR'ed; the former multi-query_regexp example was neither portable Caddy nor
+# semantically correct.
+@waf-query expression `{query}.matches('(?i)(union.*select|select.*from|insert.*into|drop.*table|eval\\(|base64_decode|system\\(|exec\\(|\\.\\./|\\.%2f|%2e%2e/|onmouseover|onerror|onload|javascript:)')`
+respond @waf-query 403

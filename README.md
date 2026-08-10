@@ -42,6 +42,9 @@ Full stack:
 docker compose -f stack/docker-compose.yml up -d
 ```
 
+For the per-application FrankenPHP model, Caddy templates, worker policy and
+Cloudflare/direct-origin setup, see [frankenphp/README.md](frankenphp/README.md).
+
 Local mode (uses locally-built `wcp/*` images with configs baked in):
 
 ```bash

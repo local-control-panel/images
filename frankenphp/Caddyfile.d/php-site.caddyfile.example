@@ -1,0 +1,24 @@
+# Generic PHP application — copy to <domain>.caddyfile, replace the domain and
+# root, then activate it by keeping the .caddyfile suffix.
+#
+# Caddy obtains and renews TLS certificates automatically for public domains.
+# For a Cloudflare-proxied site, set CADDY_TRUSTED_PROXIES=cloudflare on the
+# container so access logs and client-IP rules see the visitor's actual IP.
+
+example.com {
+    root * /var/www/example.com/public
+
+    import app-common
+
+    # Add this only when assets are content-hashed or versioned URLs.
+    # import immutable-static-assets
+
+    # CSP is application-owned. Define it here after auditing this app's
+    # scripts, styles, embeds and third-party integrations.
+    # header Content-Security-Policy "default-src 'self'"
+
+    # Standard PHP mode is the platform default and is correct for regular
+    # PHP, WordPress, legacy apps and applications that have not been audited
+    # for long-lived worker state.
+    php_server
+}

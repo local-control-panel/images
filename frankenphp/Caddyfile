@@ -1,16 +1,99 @@
 {
-    # Global options
-    admin off
+    # The admin API is deliberately off by default. Enable it only on a private
+    # control-plane address when graceful worker restarts are required.
+    admin {$CADDY_ADMIN:off}
     persist_config off
 
     servers {
-        max_request_body_size 128MB
-    }
-
-    frankenphp {
-        worker /var/www/html/index.php {$FRANKENPHP_WORKER_PROCESSES:4}
+        # "off" is the safe default. Select "cloudflare" only when this
+        # instance receives proxied traffic from Cloudflare; direct clients
+        # remain untrusted even in that mode.
+        import caddy-global/trusted-proxies/{$CADDY_TRUSTED_PROXIES:off}.caddyfile
     }
 }
 
-# Import per-site Caddyfiles managed by the control panel
+# Container liveness endpoint. This is intentionally independent of any
+# application host, PHP process, or database. Application readiness belongs in
+# the individual site's Caddyfile or application health route.
+http://localhost {
+    @healthcheck path /healthcheck
+    respond @healthcheck "OK" 200
+}
+
+# ── Reusable application snippets ──────────────────────────────────────────
+# Application Caddyfiles under /etc/frankenphp/Caddyfile.d import these
+# snippets. Keep application-specific CSP, authentication and caching rules in
+# the application's own file.
+
+(app-common) {
+    encode zstd br gzip
+
+    # Enforce the platform upload ceiling with Caddy's portable request-body
+    # handler. Individual applications can lower it in their own site file.
+    request_body {
+        max_size {$CADDY_MAX_REQUEST_BODY_SIZE:128MB}
+    }
+
+    log {
+        output stdout
+        format json
+        level {$CADDY_LOG_LEVEL:INFO}
+    }
+
+    @app-healthcheck path /healthcheck
+    respond @app-healthcheck "OK" 200
+    log_skip @app-healthcheck
+
+    import app-security
+}
+
+(app-security) {
+    # Keep ACME and other standards-based well-known endpoints available.
+    @sensitive-files {
+        path *.bak *.conf *.config *.dist *.env *.ini *.log *.sh *.sql *.swp *.swo *~ */.*
+        not path /.well-known/*
+    }
+    respond @sensitive-files 404
+
+    header {
+        -Server
+        -X-Powered-By
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+    }
+}
+
+# Opt in only for assets whose URLs change whenever their content changes.
+# Applications that overwrite files at stable URLs must define a shorter cache
+# policy in their own Caddyfile instead.
+(immutable-static-assets) {
+    @static-assets path *.css *.css.map *.js *.js.map *.jpg *.jpeg *.png *.gif *.ico *.cur *.heic *.webp *.avif *.svg *.svgz *.woff *.woff2 *.ttf *.otf *.eot *.mp3 *.m4a *.aac *.ogg *.wav *.mp4 *.mov *.webm
+    header @static-assets Cache-Control "public, max-age=31536000, immutable"
+}
+
+# WordPress safeguards are intentionally opt-in, via `import wordpress-common`
+# in a WordPress site file. They must never affect a non-WordPress PHP app.
+(wordpress-common) {
+    @wp-sensitive path /.htaccess /.htpasswd /wp-config.php /wp-config.*.php /wp-config.*.bak /readme.html /license.txt
+    respond @wp-sensitive 404
+
+    @php-in-uploads path_regexp wp_uploads ^/wp-content/uploads/.*\.php$
+    respond @php-in-uploads 403
+
+    @xmlrpc path /xmlrpc.php
+    respond @xmlrpc 403
+
+    @unsupported-methods method CONNECT DEBUG MOVE TRACE TRACK
+    respond @unsupported-methods 405
+
+    import immutable-static-assets
+}
+
+# Do not configure a global FrankenPHP worker here. A worker script is an
+# application runtime concern and must be explicitly selected in that site's
+# php_server block after it has been proven worker-safe.
+
+# Import per-application Caddyfiles managed by the control panel.
 import /etc/frankenphp/Caddyfile.d/*.caddyfile

@@ -10,6 +10,11 @@
 schemaVersion: "2.0.0"
 
 commandTests:
+  - name: "platform Caddyfile validates"
+    command: "frankenphp"
+    args: ["validate", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+    exitCode: 0
+
   - name: "wp-cli is callable"
     command: "wp"
     args: ["--version"]
@@ -78,6 +83,16 @@ fileExistenceTests:
     path: "/etc/frankenphp/Caddyfile.d"
     shouldExist: true
     isDirectory: true
+
+  - name: "trusted-proxy configuration directory present"
+    path: "/etc/caddy/caddy-global/trusted-proxies"
+    shouldExist: true
+    isDirectory: true
+
+  - name: "custom entrypoint present"
+    path: "/usr/local/bin/wcp-entrypoint"
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
 
   - name: "wp binary is a wrapper script (not a phar)"
     path: "/usr/local/bin/wp"

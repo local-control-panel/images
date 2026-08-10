@@ -1,0 +1,14 @@
+# Worker-enabled PHP application — use only with an application-owned worker
+# script that calls frankenphp_handle_request() and resets request state.
+# Do not point this at a normal framework or WordPress index.php.
+
+example.com {
+    root * /var/www/example.com/public
+    import app-common
+
+    php_server {
+        # Keep this number within the application's measured CPU and memory
+        # budget. Four 256M PHP workers can exhaust a 1GiB container.
+        worker /var/www/example.com/public/worker.php 2
+    }
+}

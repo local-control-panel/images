@@ -5,9 +5,11 @@ FROM dunglas/frankenphp:${FRANKENPHP_VERSION}-php${PHP_VERSION}
 # Bake in default configs — can still be overridden with volume mounts at runtime
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY php.ini /usr/local/etc/php/conf.d/wp-performance.ini
+COPY caddy-global/ /etc/caddy/caddy-global/
 
 # ── Entrypoint helpers ───────────────────────────────────────────────────────
 COPY docker-entrypoint.d/ /docker-entrypoint.d/
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/wcp-entrypoint
 RUN chmod +x /docker-entrypoint.d/10-msmtp.sh
 
 # Create expected directories
@@ -95,3 +97,14 @@ RUN curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-
     && printf '#!/bin/sh\nexec /usr/local/bin/wp.phar --allow-root "$@"\n' > /usr/local/bin/wp \
     && chmod +x /usr/local/bin/wp.phar /usr/local/bin/wp \
     && wp package install wp-cli/doctor-command --allow-root
+
+# Fail an image build immediately if its platform Caddy configuration is
+# invalid. Per-application Caddyfiles are mounted at runtime and are validated
+# by the control plane before activation.
+RUN frankenphp validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+# The upstream image starts FrankenPHP directly and does not execute our
+# /docker-entrypoint.d helpers. Run them explicitly, then preserve the normal
+# FrankenPHP command.
+ENTRYPOINT ["/usr/local/bin/wcp-entrypoint"]
+CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

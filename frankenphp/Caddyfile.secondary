@@ -4,5 +4,7 @@
     persist_config off
 }
 
-# Import per-site Caddyfiles managed by the control panel
+# Secondary PHP containers deliberately do not define global workers. Each
+# application opts into a worker in its own php_server block when compatible.
+# Import per-site Caddyfiles managed by the control panel.
 import /etc/frankenphp/Caddyfile.d/*.caddyfile
