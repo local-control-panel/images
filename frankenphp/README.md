@@ -37,9 +37,9 @@ container-wide `CADDY_TRUSTED_PROXIES` setting according to the network path:
   `CF-Connecting-IP`.
 - `private` — only when every direct peer is a trusted private reverse proxy.
 
-The Cloudflare ranges are a build-time snapshot in
-`caddy-global/trusted-proxies/cloudflare.caddyfile`; refresh them before
-releasing a new platform image.
+The Cloudflare ranges are updated monthly by a workflow that fetches the
+official lists and opens a PR only when they change. Merging that PR rebuilds
+the platform image.
 
 `/healthcheck` is a container liveness endpoint. It proves that Caddy responds;
 it deliberately does not prove that a given application or database is ready.

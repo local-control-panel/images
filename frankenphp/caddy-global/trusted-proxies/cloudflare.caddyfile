@@ -1,6 +1,6 @@
-# Cloudflare published IP ranges, verified 2026-08-10.
-# Refresh this file from https://www.cloudflare.com/ips-v4 and /ips-v6 whenever
-# the platform image is released, or before enabling this mode on a new host.
+# Cloudflare published IP ranges.
+# Source: https://www.cloudflare.com/ips-v4 and /ips-v6
+# Updated automatically by .github/workflows/update-cloudflare-ranges.yml.
 trusted_proxies static \
 173.245.48.0/20 \
 103.21.244.0/22 \
