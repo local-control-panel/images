@@ -29,7 +29,7 @@ jobs:
       postgres: ${{ steps.v.outputs.postgres }}
       meilisearch: ${{ steps.v.outputs.meilisearch }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Read versions.json
         id: v
@@ -50,7 +50,7 @@ jobs:
       matrix:
         php: ${{ fromJson(needs.versions.outputs.frankenphp_php_versions) }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
 
@@ -82,7 +82,7 @@ jobs:
           cache-from: type=gha,scope=frankenphp-${{ matrix.php }}
           cache-to: type=gha,mode=max,scope=frankenphp-${{ matrix.php }}
 
-      - uses: aquasecurity/trivy-action@v0.28.0
+      - uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ steps.build-frankenphp.outputs.imageid }}
           format: sarif
@@ -90,7 +90,7 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
 
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-frankenphp.sarif
@@ -100,7 +100,7 @@ jobs:
     needs: versions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
 
@@ -123,7 +123,7 @@ jobs:
           cache-from: type=gha,scope=mariadb
           cache-to: type=gha,mode=max,scope=mariadb
 
-      - uses: aquasecurity/trivy-action@v0.28.0
+      - uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ steps.build-mariadb.outputs.imageid }}
           format: sarif
@@ -131,7 +131,7 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
 
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-mariadb.sarif
@@ -141,7 +141,7 @@ jobs:
     needs: versions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
 
@@ -164,7 +164,7 @@ jobs:
           cache-from: type=gha,scope=valkey
           cache-to: type=gha,mode=max,scope=valkey
 
-      - uses: aquasecurity/trivy-action@v0.28.0
+      - uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ steps.build-valkey.outputs.imageid }}
           format: sarif
@@ -172,7 +172,7 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
 
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-valkey.sarif
@@ -182,7 +182,7 @@ jobs:
     needs: versions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
 
@@ -205,7 +205,7 @@ jobs:
           cache-from: type=gha,scope=postgres
           cache-to: type=gha,mode=max,scope=postgres
 
-      - uses: aquasecurity/trivy-action@v0.28.0
+      - uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ steps.build-postgres.outputs.imageid }}
           format: sarif
@@ -213,7 +213,7 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
 
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-postgres.sarif
@@ -223,7 +223,7 @@ jobs:
     needs: versions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
 
@@ -246,7 +246,7 @@ jobs:
           cache-from: type=gha,scope=meilisearch
           cache-to: type=gha,mode=max,scope=meilisearch
 
-      - uses: aquasecurity/trivy-action@v0.28.0
+      - uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ steps.build-meilisearch.outputs.imageid }}
           format: sarif
@@ -254,7 +254,7 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
 
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: trivy-meilisearch.sarif
