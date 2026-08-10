@@ -82,7 +82,7 @@ jobs:
           cache-from: type=gha,scope=frankenphp-${{ matrix.php }}
           cache-to: type=gha,mode=max,scope=frankenphp-${{ matrix.php }}
 
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: ${{ steps.build-frankenphp.outputs.imageid }}
           format: sarif
@@ -123,7 +123,7 @@ jobs:
           cache-from: type=gha,scope=mariadb
           cache-to: type=gha,mode=max,scope=mariadb
 
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: ${{ steps.build-mariadb.outputs.imageid }}
           format: sarif
@@ -164,7 +164,7 @@ jobs:
           cache-from: type=gha,scope=valkey
           cache-to: type=gha,mode=max,scope=valkey
 
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: ${{ steps.build-valkey.outputs.imageid }}
           format: sarif
@@ -205,7 +205,7 @@ jobs:
           cache-from: type=gha,scope=postgres
           cache-to: type=gha,mode=max,scope=postgres
 
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: ${{ steps.build-postgres.outputs.imageid }}
           format: sarif
@@ -246,7 +246,7 @@ jobs:
           cache-from: type=gha,scope=meilisearch
           cache-to: type=gha,mode=max,scope=meilisearch
 
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: ${{ steps.build-meilisearch.outputs.imageid }}
           format: sarif
