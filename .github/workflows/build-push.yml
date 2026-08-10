@@ -84,7 +84,7 @@ jobs:
 
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ steps.build-frankenphp.outputs.imageid }}
+          image-ref: ghcr.io/${{ github.repository_owner }}/frankenphp:${{ needs.versions.outputs.frankenphp }}-php${{ matrix.php }}
           format: sarif
           output: trivy-frankenphp.sarif
           severity: CRITICAL,HIGH
@@ -125,7 +125,7 @@ jobs:
 
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ steps.build-mariadb.outputs.imageid }}
+          image-ref: ghcr.io/${{ github.repository_owner }}/mariadb:${{ needs.versions.outputs.mariadb }}
           format: sarif
           output: trivy-mariadb.sarif
           severity: CRITICAL,HIGH
@@ -166,7 +166,7 @@ jobs:
 
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ steps.build-valkey.outputs.imageid }}
+          image-ref: ghcr.io/${{ github.repository_owner }}/valkey:${{ needs.versions.outputs.valkey }}
           format: sarif
           output: trivy-valkey.sarif
           severity: CRITICAL,HIGH
@@ -207,7 +207,7 @@ jobs:
 
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ steps.build-postgres.outputs.imageid }}
+          image-ref: ghcr.io/${{ github.repository_owner }}/postgres:${{ needs.versions.outputs.postgres }}
           format: sarif
           output: trivy-postgres.sarif
           severity: CRITICAL,HIGH
@@ -248,7 +248,7 @@ jobs:
 
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ steps.build-meilisearch.outputs.imageid }}
+          image-ref: ghcr.io/${{ github.repository_owner }}/meilisearch:${{ needs.versions.outputs.meilisearch }}
           format: sarif
           output: trivy-meilisearch.sarif
           severity: CRITICAL,HIGH
