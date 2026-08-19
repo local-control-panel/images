@@ -134,8 +134,17 @@ jobs:
             FRANKENPHP_VERSION=${{ needs.versions.outputs.frankenphp }}
             PHP_VERSION=${{ matrix.php }}
           outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/frankenphp,push-by-digest=true,name-canonical=true,push=true
-          cache-from: type=gha,scope=frankenphp-${{ matrix.php }}-${{ env.PLATFORM_SLUG }}
-          cache-to: type=gha,mode=max,scope=frankenphp-${{ matrix.php }}-${{ env.PLATFORM_SLUG }}
+          # gha cache is fast but evicted after 7 days / 10GB; the registry
+          # cache is slower but persists across the long gaps between
+          # FrankenPHP/PHP version bumps. Scoped per php+platform (not one
+          # shared buildcache tag) since matrix legs push concurrently and
+          # would otherwise clobber each other's cache.
+          cache-from: |
+            type=gha,scope=frankenphp-${{ matrix.php }}-${{ env.PLATFORM_SLUG }}
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/frankenphp:buildcache-${{ matrix.php }}-${{ env.PLATFORM_SLUG }}
+          cache-to: |
+            type=gha,mode=max,scope=frankenphp-${{ matrix.php }}-${{ env.PLATFORM_SLUG }}
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/frankenphp:buildcache-${{ matrix.php }}-${{ env.PLATFORM_SLUG }},mode=max
 
       - name: Export digest
         run: |
