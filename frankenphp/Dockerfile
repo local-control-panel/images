@@ -2,19 +2,6 @@ ARG FRANKENPHP_VERSION=1
 ARG PHP_VERSION=8.3
 FROM dunglas/frankenphp:${FRANKENPHP_VERSION}-php${PHP_VERSION}
 
-# Bake in default configs — can still be overridden with volume mounts at runtime
-COPY Caddyfile /etc/caddy/Caddyfile
-COPY php.ini /usr/local/etc/php/conf.d/wp-performance.ini
-COPY caddy-global/ /etc/caddy/caddy-global/
-
-# ── Entrypoint helpers ───────────────────────────────────────────────────────
-COPY docker-entrypoint.d/ /docker-entrypoint.d/
-COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/wcp-entrypoint
-RUN chmod +x /docker-entrypoint.d/10-msmtp.sh
-
-# Create expected directories
-RUN mkdir -p /etc/frankenphp/Caddyfile.d /etc/msmtprc.d /var/www /var/log/caddy
-
 # ── System packages ─────────────────────────────────────────────────────────
 # Grouped into a single apt run to keep layers clean and the package index
 # removed at the end.
@@ -97,6 +84,19 @@ RUN curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-
     && printf '#!/bin/sh\nexec /usr/local/bin/wp.phar --allow-root "$@"\n' > /usr/local/bin/wp \
     && chmod +x /usr/local/bin/wp.phar /usr/local/bin/wp \
     && for i in 1 2 3; do wp package install wp-cli/doctor-command:2.3.1 --allow-root && break || sleep 5; [ "$i" = 3 ] && exit 1; done
+
+# Bake in default configs — can still be overridden with volume mounts at runtime
+COPY Caddyfile /etc/caddy/Caddyfile
+COPY php.ini /usr/local/etc/php/conf.d/wp-performance.ini
+COPY caddy-global/ /etc/caddy/caddy-global/
+
+# ── Entrypoint helpers ───────────────────────────────────────────────────────
+COPY docker-entrypoint.d/ /docker-entrypoint.d/
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/wcp-entrypoint
+RUN chmod +x /docker-entrypoint.d/10-msmtp.sh
+
+# Create expected directories
+RUN mkdir -p /etc/frankenphp/Caddyfile.d /etc/msmtprc.d /var/www /var/log/caddy
 
 # Fail an image build immediately if its platform Caddy configuration is
 # invalid. Per-application Caddyfiles are mounted at runtime and are validated
