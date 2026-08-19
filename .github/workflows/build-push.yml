@@ -28,8 +28,15 @@ jobs:
       valkey: ${{ steps.v.outputs.valkey }}
       postgres: ${{ steps.v.outputs.postgres }}
       meilisearch: ${{ steps.v.outputs.meilisearch }}
+      frankenphp_changed: ${{ steps.changes.outputs.frankenphp }}
+      mariadb_changed: ${{ steps.changes.outputs.mariadb }}
+      valkey_changed: ${{ steps.changes.outputs.valkey }}
+      postgres_changed: ${{ steps.changes.outputs.postgres }}
+      meilisearch_changed: ${{ steps.changes.outputs.meilisearch }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Read versions.json
         id: v
@@ -42,11 +49,56 @@ jobs:
           echo "postgres=$(jq -r '.images.postgres.version' versions.json)" >> $GITHUB_OUTPUT
           echo "meilisearch=$(jq -r '.images.meilisearch.version' versions.json)" >> $GITHUB_OUTPUT
 
+      # Per-image change detection: an image is "changed" if its build
+      # context directory touched, or its versions.json entry differs from
+      # the previous commit. workflow_dispatch ignores these outputs
+      # entirely (see per-job `if:` below) and always builds everything.
+      - name: Detect changed images
+        id: changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = "push" ] \
+             && [ -n "$BASE_SHA" ] \
+             && [ "$BASE_SHA" != "0000000000000000000000000000000000000000" ] \
+             && git cat-file -e "$BASE_SHA" 2>/dev/null; then
+            BASE="$BASE_SHA"
+          else
+            BASE=""
+          fi
+
+          changed() {
+            key="$1"
+            if [ -z "$BASE" ]; then
+              echo true
+              return
+            fi
+            if ! git diff --quiet "$BASE" HEAD -- "$key/"; then
+              echo true
+              return
+            fi
+            old=$(git show "$BASE:versions.json" 2>/dev/null | jq -c ".images.$key" 2>/dev/null)
+            new=$(jq -c ".images.$key" versions.json)
+            if [ "$old" != "$new" ]; then
+              echo true
+            else
+              echo false
+            fi
+          }
+
+          echo "frankenphp=$(changed frankenphp)" >> "$GITHUB_OUTPUT"
+          echo "mariadb=$(changed mariadb)" >> "$GITHUB_OUTPUT"
+          echo "valkey=$(changed valkey)" >> "$GITHUB_OUTPUT"
+          echo "postgres=$(changed postgres)" >> "$GITHUB_OUTPUT"
+          echo "meilisearch=$(changed meilisearch)" >> "$GITHUB_OUTPUT"
+
   # Built natively per-platform (no QEMU) and merged into one manifest below,
   # since arm64 under QEMU emulation is 5-10x slower for compiling PHP
   # extensions than running on a real arm64 runner.
   frankenphp-build:
     needs: versions
+    if: github.event_name == 'workflow_dispatch' || needs.versions.outputs.frankenphp_changed == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -100,6 +152,7 @@ jobs:
 
   frankenphp-merge:
     needs: [versions, frankenphp-build]
+    if: github.event_name == 'workflow_dispatch' || needs.versions.outputs.frankenphp_changed == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -152,6 +205,7 @@ jobs:
 
   mariadb:
     needs: versions
+    if: github.event_name == 'workflow_dispatch' || needs.versions.outputs.mariadb_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: docker/setup-buildx-action@v4
@@ -188,6 +242,7 @@ jobs:
 
   valkey:
     needs: versions
+    if: github.event_name == 'workflow_dispatch' || needs.versions.outputs.valkey_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: docker/setup-buildx-action@v4
@@ -224,6 +279,7 @@ jobs:
 
   postgres:
     needs: versions
+    if: github.event_name == 'workflow_dispatch' || needs.versions.outputs.postgres_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: docker/setup-buildx-action@v4
@@ -260,6 +316,7 @@ jobs:
 
   meilisearch:
     needs: versions
+    if: github.event_name == 'workflow_dispatch' || needs.versions.outputs.meilisearch_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: docker/setup-buildx-action@v4
