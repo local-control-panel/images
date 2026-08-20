@@ -1,6 +1,6 @@
 services:
   meilisearch:
-    image: ghcr.io/local-control-panel/meilisearch:${MEILISEARCH_VERSION:-1.13}
+    image: ghcr.io/local-control-panel/meilisearch:${MEILISEARCH_VERSION:-1.53}
     container_name: meilisearch
     restart: unless-stopped
     env_file:

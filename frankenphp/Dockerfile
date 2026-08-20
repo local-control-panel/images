@@ -72,7 +72,12 @@ RUN install-php-extensions \
     pdo_pgsql \
     redis-6.3.0 \
     sockets \
-    zip
+    zip \
+    # linux-libc-dev is pulled in as a build dependency (e.g. for compiling
+    # redis-6.3.0 from source) and never used at runtime. It's just kernel
+    # header files, not executable code, but Trivy still flags every kernel
+    # CVE against its version string — purge it to cut that noise.
+    && apt-get purge -y --auto-remove linux-libc-dev 2>/dev/null || true
 
 # ── WP-CLI ──────────────────────────────────────────────────────────────────
 # php --info verifies the phar is valid before it is moved into place.

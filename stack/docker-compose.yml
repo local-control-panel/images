@@ -268,7 +268,7 @@ services:
 
   # ── Full-text search (optional) ───────────────────────────────────────────
   meilisearch:
-    image: getmeili/meilisearch:v${MEILISEARCH_VERSION:-1.13}
+    image: getmeili/meilisearch:v${MEILISEARCH_VERSION:-1.53}
     container_name: meilisearch
     restart: unless-stopped
     environment:
