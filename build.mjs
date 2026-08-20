@@ -106,7 +106,6 @@ const targets = args.filter((a) => !a.startsWith("--"));
 
 const checkOnly = args.includes("--check");
 if (checkOnly) {
-  const { join: pathJoin } = await import("path");
   const checkScript = join(__dir, ".github/scripts/check-docker-versions.mjs");
   process.env.DRY_RUN = "true";
   const result = spawnSync("node", [checkScript], { stdio: "inherit", env: { ...process.env, DRY_RUN: "true" } });
