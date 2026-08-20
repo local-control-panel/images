@@ -64,53 +64,6 @@ services:
   # The main frankenphp container reverse-proxies to them by domain.
   # Started on demand via --profile php-8.X — not running by default.
 
-  frankenphp-8.1:
-    # PHP 8.1 is a legacy compatibility profile. It uses the upstream base
-    # because our release pipeline supports maintained PHP versions only.
-    image: dunglas/frankenphp:${FRANKENPHP_VERSION:-1}-php8.1
-    container_name: frankenphp-8.1
-    restart: unless-stopped
-    profiles: ["php-8.1"]
-    volumes:
-      - ../frankenphp/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ../frankenphp/caddy-global:/etc/caddy/caddy-global:ro
-      - ../frankenphp/php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
-      - /etc/frankenphp-8.1/Caddyfile.d:/etc/frankenphp/Caddyfile.d:ro
-      - /var/www:/var/www
-      - /var/log/caddy:/var/log/caddy
-    environment:
-      CADDY_TRUSTED_PROXIES: ${CADDY_TRUSTED_PROXIES:-off}
-      CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
-    networks:
-      - backend
-    deploy:
-      resources:
-        limits:
-          cpus: "2.0"
-          memory: 1024M
-
-  frankenphp-8.2:
-    image: ${WCP_FRANKENPHP_82_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php8.2}
-    container_name: frankenphp-8.2
-    restart: unless-stopped
-    profiles: ["php-8.2"]
-    volumes:
-      - ../frankenphp/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ../frankenphp/php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
-      - /etc/frankenphp-8.2/Caddyfile.d:/etc/frankenphp/Caddyfile.d:ro
-      - /var/www:/var/www
-      - /var/log/caddy:/var/log/caddy
-    environment:
-      CADDY_TRUSTED_PROXIES: ${CADDY_TRUSTED_PROXIES:-off}
-      CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
-    networks:
-      - backend
-    deploy:
-      resources:
-        limits:
-          cpus: "2.0"
-          memory: 1024M
-
   frankenphp-8.4:
     image: ${WCP_FRANKENPHP_84_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php8.4}
     container_name: frankenphp-8.4
