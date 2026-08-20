@@ -220,6 +220,24 @@ services:
       start_period: 20s
 
   # ── Full-text search (optional) ───────────────────────────────────────────
+  #
+  # Upgrading an existing meilisearch_data volume to a new MEILISEARCH_VERSION
+  # is NOT a plain image swap - the on-disk database format is version-tied,
+  # and Meilisearch documents this as non-atomic (a partial failure can
+  # corrupt the database). Before bumping the version on a server that
+  # already has data:
+  #   1. Snapshot first:   docker compose --profile meilisearch exec meilisearch \
+  #        curl -sf -X POST -H "Authorization: Bearer $MEILISEARCH_MASTER_KEY" \
+  #        http://localhost:7700/snapshots
+  #      (snapshot lands in /meili_data/snapshots inside the container/volume)
+  #   2. One-off upgrade run (does NOT stay in the service's normal command):
+  #        docker compose --profile meilisearch run --rm meilisearch \
+  #          meilisearch --upgrade-db
+  #      This performs the upgrade against the existing volume and exits once
+  #      the UpgradeDatabase task finishes; it does not start as the ongoing
+  #      server.
+  #   3. Then start normally: docker compose --profile meilisearch up -d
+  # See https://www.meilisearch.com/docs/resources/migration/updating.
   meilisearch:
     image: getmeili/meilisearch:v${MEILISEARCH_VERSION:-1.53}
     container_name: meilisearch
