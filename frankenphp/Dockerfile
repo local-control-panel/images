@@ -50,7 +50,8 @@ RUN apt-get update \
 #   pcntl      → process control (used by WP-CLI, queue workers)
 #   pdo_mysql  → PDO driver for MySQL / MariaDB
 #   pdo_pgsql  → PDO driver for PostgreSQL
-#   redis-6.2.0 → Redis / Valkey object-cache support (pinned for reproducibility)
+#   redis-6.3.0 → Redis / Valkey object-cache support (pinned for reproducibility;
+#                 6.2.0 fails to build on PHP 8.5 — php_smart_string.h was removed)
 #   sockets    → low-level socket API (required by some queue / async plugins)
 #   zip        → ZIP read/write (plugin & theme installs, backup plugins)
 #
@@ -69,7 +70,7 @@ RUN install-php-extensions \
     pcntl \
     pdo_mysql \
     pdo_pgsql \
-    redis-6.2.0 \
+    redis-6.3.0 \
     sockets \
     zip
 
@@ -83,6 +84,10 @@ RUN curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-
     && mv /tmp/wp-cli.phar /usr/local/bin/wp.phar \
     && printf '#!/bin/sh\nexec /usr/local/bin/wp.phar --allow-root "$@"\n' > /usr/local/bin/wp \
     && chmod +x /usr/local/bin/wp.phar /usr/local/bin/wp \
+    # Composer falls back to `git@github.com:` for VCS clones, which hangs/fails
+    # without a registered SSH key (no SSH auth for anonymous GitHub reads,
+    # even on public repos). Rewrite it to the anonymous HTTPS remote instead.
+    && git config --global url."https://github.com/".insteadOf git@github.com: \
     && for i in 1 2 3; do wp package install wp-cli/doctor-command:2.3.1 --allow-root && break || sleep 5; [ "$i" = 3 ] && exit 1; done
 
 # Bake in default configs — can still be overridden with volume mounts at runtime
