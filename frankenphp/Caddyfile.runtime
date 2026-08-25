@@ -1,0 +1,22 @@
+{
+    # Global options. Runtime pools only ever see traffic from ingress over
+    # the private `edge` network, so - unlike Caddyfile.ingress - there is no
+    # trusted-proxies concern here. Unix-socket admin API, not "off" - see
+    # Caddyfile.ingress's comment: reload needs it reachable, and this
+    # doesn't expose it beyond `docker exec` into this same container.
+    admin unix//run/caddy-admin.sock
+    persist_config off
+}
+
+# Container liveness endpoint, independent of any site.
+http://localhost {
+    @healthcheck path /healthcheck
+    respond @healthcheck "OK" 200
+}
+
+# Runtime pools deliberately do not define a global worker. Each application
+# opts into a worker in its own php_server block when compatible.
+# Execution files for this pool's sites, one per domain: the host directory
+# mounted to /etc/wcp/runtime.d differs per runtime-<id> service, but the
+# in-container path is the same for every pool (docker-compose.v2.yml).
+import /etc/wcp/runtime.d/*.caddyfile
