@@ -1,0 +1,238 @@
+# WordPress hosting stack — Compose layout v2 (FrankenPHP ingress + runtime
+# pools). See docs/devdocs/runtime-platform/README.md.
+#
+# Coexists with docker-compose.yml (layout v1); v1 stays the default until
+# the existing-server migration workflow ships. This file is currently used
+# for new test installations only.
+#
+# 1. cp ../.env.example ../.env
+# 2. Edit ../.env (versions + passwords)
+# 3. docker compose -p wcp -f docker-compose.v2.yml up -d
+
+services:
+
+  # ── Public entrypoint — Caddy only, no PHP ──────────────────────────────────
+  # The only service with host port bindings or TLS state. Restart/upgrade of
+  # any runtime pool never touches this container.
+  ingress:
+    image: ${WCP_FRANKENPHP_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php${PHP_VERSION:-8.3}}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ../frankenphp/Caddyfile.ingress:/etc/caddy/Caddyfile:ro
+      - /etc/wcp/ingress.d:/etc/wcp/ingress.d:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - /var/log/caddy:/var/log/caddy
+    environment:
+      CADDY_TRUSTED_PROXIES: ${CADDY_TRUSTED_PROXIES:-off}
+      CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
+    networks:
+      - edge
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 64M
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://localhost/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ── Default PHP runtime pool (fp1-php83) ────────────────────────────────────
+  runtime-fp1-php83:
+    image: ${WCP_FRANKENPHP_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php${PHP_VERSION:-8.3}}
+    restart: unless-stopped
+    volumes:
+      - ../frankenphp/Caddyfile.runtime:/etc/caddy/Caddyfile:ro
+      - ../frankenphp/php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
+      - /etc/wcp/runtimes/fp1-php83:/etc/wcp/runtime.d:ro
+      - /var/www:/var/www
+      - /var/log/caddy:/var/log/caddy
+    environment:
+      CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
+    networks:
+      - edge
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1024M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://localhost/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ── Secondary PHP runtime pools ─────────────────────────────────────────────
+  # Handle sites that require a different PHP version than the default
+  # (8.3). Ingress reverse-proxies to these by domain. Started on demand via
+  # --profile php-8.X - not running by default (mirrors docker-compose.yml).
+  runtime-fp1-php84:
+    image: ${WCP_FRANKENPHP_84_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php8.4}
+    restart: unless-stopped
+    profiles: ["php-8.4"]
+    volumes:
+      - ../frankenphp/Caddyfile.runtime:/etc/caddy/Caddyfile:ro
+      - ../frankenphp/php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
+      - /etc/wcp/runtimes/fp1-php84:/etc/wcp/runtime.d:ro
+      - /var/www:/var/www
+      - /var/log/caddy:/var/log/caddy
+    environment:
+      CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
+    networks:
+      - edge
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1024M
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://localhost/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  runtime-fp1-php85:
+    image: ${WCP_FRANKENPHP_85_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php8.5}
+    restart: unless-stopped
+    profiles: ["php-8.5"]
+    volumes:
+      - ../frankenphp/Caddyfile.runtime:/etc/caddy/Caddyfile:ro
+      - ../frankenphp/php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
+      - /etc/wcp/runtimes/fp1-php85:/etc/wcp/runtime.d:ro
+      - /var/www:/var/www
+      - /var/log/caddy:/var/log/caddy
+    environment:
+      CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
+    networks:
+      - edge
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1024M
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://localhost/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ── Database ──────────────────────────────────────────────────────────────
+  mariadb-11:
+    image: ghcr.io/local-control-panel/mariadb:${MARIADB_VERSION:-11.4}
+    restart: unless-stopped
+    command: --innodb-buffer-pool-size=${MARIADB_INNODB_BUFFER_POOL_SIZE:-1024M}
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?required}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-wordpress}
+      MARIADB_USER: ${MARIADB_USER:-wp}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:?required}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ../mariadb/conf.d:/etc/mysql/conf.d:ro
+    networks:
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Object cache ──────────────────────────────────────────────────────────
+  valkey-8:
+    image: ghcr.io/local-control-panel/valkey:${VALKEY_VERSION:-8}
+    restart: unless-stopped
+    command: valkey-server /etc/valkey/valkey.conf
+    volumes:
+      - ../valkey/valkey.conf:/etc/valkey/valkey.conf:ro
+      - valkey_data:/data
+    networks:
+      - backend
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 64M
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  caddy_data:
+  caddy_config:
+  mariadb_data:
+  valkey_data:
+
+networks:
+  # ingress + runtime pools. No data service is reachable from here.
+  edge:
+    driver: bridge
+  # runtime pools + data services. Ingress has no access to this network.
+  backend:
+    driver: bridge
