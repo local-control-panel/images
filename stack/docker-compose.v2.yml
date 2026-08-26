@@ -15,7 +15,14 @@ services:
   # The only service with host port bindings or TLS state. Restart/upgrade of
   # any runtime pool never touches this container.
   ingress:
-    image: ${WCP_FRANKENPHP_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php${PHP_VERSION:-8.3}}
+    # Deliberately its own var, not WCP_FRANKENPHP_IMAGE/PHP_VERSION below -
+    # ingress never executes PHP, so its image tag must not be entangled
+    # with which PHP version the default runtime pool serves (RP-03,
+    # docs/devdocs/runtime-platform/README.md). The PHP component is
+    # hardcoded to the catalog's default runtime tuple's tag, not
+    # env-configurable - editing "PHP version" in the Stack UI must not be
+    # able to change what ingress runs.
+    image: ${WCP_INGRESS_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php8.3}
     restart: unless-stopped
     ports:
       - "80:80"
@@ -57,7 +64,13 @@ services:
 
   # ── Default PHP runtime pool (fp1-php83) ────────────────────────────────────
   runtime-fp1-php83:
-    image: ${WCP_FRANKENPHP_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php${PHP_VERSION:-8.3}}
+    # `-php8.3` hardcoded, not `${PHP_VERSION:-8.3}` - this service's
+    # identity IS "fp1-php83" (images/versions.json's runtimes[].id); the
+    # PHP component of its own image can't be a separately mutable setting
+    # without the id silently lying about what's actually running (RP-03).
+    # Mirrors runtime-fp1-php84/85 below, which already hardcode their own
+    # PHP component the same way.
+    image: ${WCP_FRANKENPHP_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php8.3}
     restart: unless-stopped
     volumes:
       - ../frankenphp/Caddyfile.runtime:/etc/caddy/Caddyfile:ro
