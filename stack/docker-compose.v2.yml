@@ -129,6 +129,12 @@ services:
         limits:
           cpus: "2.0"
           memory: 1024M
+    # RP-10 (docs/devdocs/runtime-platform/README.md): this pool runs the
+    # same untrusted PHP application code as runtime-fp1-php83 above, which
+    # already has this - missing here looked like an oversight, not a
+    # deliberate difference.
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://localhost/healthcheck"]
       interval: 30s
@@ -156,6 +162,9 @@ services:
         limits:
           cpus: "2.0"
           memory: 1024M
+    # RP-10: same reasoning as runtime-fp1-php84 above.
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://localhost/healthcheck"]
       interval: 30s
