@@ -1,0 +1,9 @@
+# Self-signed certificates from Caddy's own internal CA instead of public
+# ACME, for every site block. Use only for local development or CI/Docker
+# test environments that have no real DNS resolution or reachable port
+# 80/443 for a real ACME challenge - browsers and non-Caddy HTTP clients
+# will not trust these certs unless they also trust Caddy's local root
+# (curl needs -k, or --cacert against the exported root). Never select this
+# on a real production origin: it silently produces certificates the public
+# internet cannot verify.
+local_certs

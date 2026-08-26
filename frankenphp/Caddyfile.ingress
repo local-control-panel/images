@@ -9,6 +9,12 @@
     admin unix//run/caddy-admin.sock
     persist_config off
 
+    # "public" (default) issues real ACME certificates - correct for a
+    # direct origin or Cloudflare Full (strict). "local" switches every site
+    # to Caddy's internal CA instead - local dev/CI only, see
+    # caddy-global/tls-mode/local.caddyfile.
+    import caddy-global/tls-mode/{$WCP_TLS_MODE:public}.caddyfile
+
     servers {
         # "off" is the safe default. Select "cloudflare" only when this
         # instance receives proxied traffic from Cloudflare; direct clients
