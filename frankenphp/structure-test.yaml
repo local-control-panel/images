@@ -89,6 +89,11 @@ fileExistenceTests:
     shouldExist: true
     isDirectory: true
 
+  - name: "TLS mode configuration directory present"
+    path: "/etc/caddy/caddy-global/tls-mode"
+    shouldExist: true
+    isDirectory: true
+
   - name: "custom entrypoint present"
     path: "/usr/local/bin/wcp-entrypoint"
     shouldExist: true

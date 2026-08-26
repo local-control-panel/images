@@ -30,6 +30,7 @@ services:
     environment:
       CADDY_TRUSTED_PROXIES: ${CADDY_TRUSTED_PROXIES:-off}
       CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
+      WCP_TLS_MODE: ${WCP_TLS_MODE:-public}
     networks:
       - edge
     deploy:
