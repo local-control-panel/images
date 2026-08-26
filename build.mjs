@@ -53,14 +53,28 @@ function imageExists(tag) {
 const versions = JSON.parse(readFileSync(VERSIONS_PATH, "utf8"));
 const v = versions.images;
 
+// No static `phpDefault` field - the recommended PHP version is computed as
+// the middle of the "supported" runtimes by version, same rule as
+// src-tauri/src/image_catalog.rs's default_runtime_tuple/src/shared/
+// image-catalog.ts's defaultRuntime, so this local dev build tracks
+// whichever version the app itself would actually recommend.
+const supportedRuntimes = v.frankenphp.runtimes
+  .filter((r) => r.supportStatus === "supported")
+  .sort((a, b) => {
+    const av = a.phpVersion.split(".").map(Number);
+    const bv = b.phpVersion.split(".").map(Number);
+    return (av[0] ?? 0) - (bv[0] ?? 0) || (av[1] ?? 0) - (bv[1] ?? 0);
+  });
+const defaultPhpVersion = supportedRuntimes[Math.floor((supportedRuntimes.length - 1) / 2)].phpVersion;
+
 const BUILDS = [
   {
     name: "frankenphp",
     context: join(__dir, "frankenphp"),
-    tag: `wcp/frankenphp:${v.frankenphp.version}-php${v.frankenphp.phpDefault}`,
+    tag: `wcp/frankenphp:${v.frankenphp.version}-php${defaultPhpVersion}`,
     buildArgs: {
       FRANKENPHP_VERSION: v.frankenphp.version,
-      PHP_VERSION: v.frankenphp.phpDefault,
+      PHP_VERSION: defaultPhpVersion,
     },
   },
   {
