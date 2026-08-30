@@ -1,0 +1,40 @@
+# Local mode overlay — applied on top of docker-compose.v2.yml when running
+# locally. Uses locally built wcp/* images and sandboxed local data
+# directories instead of the real host paths the base file bind-mounts
+# (/etc/wcp/ingress.d, /etc/wcp/runtime.d, /var/www, /var/log/caddy) - those
+# host paths only make sense on an actually managed server.
+#
+# Unlike docker-compose.local.yml (v1), this does NOT drop the Caddyfile /
+# php.ini bind mounts: v2's ingress and runtime-pool Caddyfiles
+# (Caddyfile.ingress / Caddyfile.runtime) aren't baked into any image -
+# frankenphp/Dockerfile only bakes the single legacy v1 Caddyfile - so the
+# bind mount is the only way either role gets its actual config.
+#
+# Manual usage:
+#   docker compose -f docker-compose.v2.yml -f docker-compose.v2.local.yml up -d
+
+services:
+
+  ingress:
+    image: ${WCP_INGRESS_IMAGE:-wcp/frankenphp:1-php8.3}
+    volumes:
+      - ../frankenphp/Caddyfile.ingress:/etc/caddy/Caddyfile:ro
+      - ${WCP_INGRESS_D}:/etc/wcp/ingress.d:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - ${WCP_CADDY_LOG}:/var/log/caddy
+
+  runtime-fp1-php83:
+    image: ${WCP_FRANKENPHP_IMAGE:-wcp/frankenphp:1-php8.3}
+    volumes:
+      - ../frankenphp/Caddyfile.runtime:/etc/caddy/Caddyfile:ro
+      - ../frankenphp/php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
+      - ${WCP_RUNTIME_D}:/etc/wcp/runtime.d:ro
+      - ${WCP_WWW_ROOT}:/var/www
+      - ${WCP_CADDY_LOG}:/var/log/caddy
+
+  mariadb-11:
+    image: ${WCP_MARIADB_IMAGE:-wcp/mariadb:11.4}
+
+  valkey-8:
+    image: ${WCP_VALKEY_IMAGE:-wcp/valkey:8}

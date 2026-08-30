@@ -35,18 +35,36 @@ async function fetchTags(image, pageSize = 100) {
 }
 
 /**
- * Returns the latest MAJOR.MINOR version tag that:
- *  - matches semver-ish (digits and dots only, optional -suffix)
- *  - is NOT a pre-release (no alpha/beta/rc)
- *  - supports both linux/amd64 AND linux/arm64
+ * Splits a `versions.json` `tagPattern` (e.g. `"{version}-alpine"`,
+ * `"v{version}"`) around its `{version}` placeholder.
  */
-async function latestStableVersion(image, currentMajor) {
+function splitTagPattern(tagPattern) {
+  const idx = tagPattern.indexOf("{version}");
+  return {
+    prefix: tagPattern.slice(0, idx),
+    suffix: tagPattern.slice(idx + "{version}".length),
+  };
+}
+
+/**
+ * Returns the latest MAJOR.MINOR version whose tag - built from `tagPattern`,
+ * e.g. `{version}-alpine` for postgres - actually exists on Docker Hub with:
+ *  - a semver-ish version part (digits and dots only, no alpha/beta/rc)
+ *  - both linux/amd64 AND linux/arm64 support
+ * Matching the exact tag shape (not just any numeric-looking tag) matters
+ * because `build-push.yml` re-tags that specific upstream tag - a bare
+ * numeric tag can go multi-arch before its `-alpine` counterpart does.
+ */
+async function latestStableVersion(image, currentMajor, tagPattern) {
   const tags = await fetchTags(image);
+  const { prefix, suffix } = splitTagPattern(tagPattern);
 
   const stable = tags.filter((t) => {
     const name = t.name;
-    if (!/^\d+(\.\d+)*(-[a-z0-9]+)?$/.test(name)) return false;
-    if (/alpha|beta|rc|preview|dev/i.test(name)) return false;
+    if (!name.startsWith(prefix) || !name.endsWith(suffix)) return false;
+    const version = name.slice(prefix.length, name.length - suffix.length);
+    if (!/^\d+(\.\d+)*$/.test(version)) return false;
+    if (/alpha|beta|rc|preview|dev/i.test(version)) return false;
     const images = t.images ?? [];
     const hasAmd64 = images.some((i) => i.architecture === "amd64" && i.os === "linux");
     const hasArm64 = images.some((i) => i.architecture === "arm64" && i.os === "linux");
@@ -55,9 +73,11 @@ async function latestStableVersion(image, currentMajor) {
 
   if (stable.length === 0) return null;
 
+  const versionOf = (name) => name.slice(prefix.length, name.length - suffix.length);
+
   stable.sort((a, b) => {
-    const av = a.name.split("-")[0].split(".").map(Number);
-    const bv = b.name.split("-")[0].split(".").map(Number);
+    const av = versionOf(a.name).split(".").map(Number);
+    const bv = versionOf(b.name).split(".").map(Number);
     for (let i = 0; i < Math.max(av.length, bv.length); i++) {
       const diff = (bv[i] ?? 0) - (av[i] ?? 0);
       if (diff !== 0) return diff;
@@ -65,7 +85,7 @@ async function latestStableVersion(image, currentMajor) {
     return 0;
   });
 
-  const best = stable[0].name.split("-")[0];
+  const best = versionOf(stable[0].name);
   const parts = best.split(".");
   if (String(currentMajor).split(".").length === 1 && parts.length >= 1) {
     return parts[0];
@@ -136,7 +156,7 @@ for (const [key, cfg] of Object.entries(versions.images)) {
         extraChanges.phpVersions = result.phpVersions;
       }
     } else {
-      newVersion = await latestStableVersion(cfg.image, cfg.version);
+      newVersion = await latestStableVersion(cfg.image, cfg.version, cfg.tagPattern);
     }
 
     if (!newVersion) {
