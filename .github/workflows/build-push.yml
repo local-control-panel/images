@@ -43,7 +43,18 @@ jobs:
         run: |
           echo "frankenphp=$(jq -r '.images.frankenphp.version' versions.json)" >> $GITHUB_OUTPUT
           echo "frankenphp_php_versions=$(jq -c '.images.frankenphp.phpVersions' versions.json)" >> $GITHUB_OUTPUT
-          echo "frankenphp_php_default=$(jq -r '.images.frankenphp.phpDefault' versions.json)" >> $GITHUB_OUTPUT
+          # No static `phpDefault` field - the recommended PHP version is
+          # computed as the middle of the "supported" runtimes by version,
+          # same rule as src-tauri/src/image_catalog.rs's
+          # default_runtime_tuple/src/shared/image-catalog.ts's
+          # defaultRuntime, so the `:latest` tag below tracks whichever
+          # version the app itself would actually recommend.
+          echo "frankenphp_php_default=$(jq -r '
+            [.images.frankenphp.runtimes[] | select(.supportStatus == "supported")]
+            | sort_by(.phpVersion | split(".") | map(tonumber))
+            | .[(length - 1) / 2 | floor]
+            | .phpVersion
+          ' versions.json)" >> $GITHUB_OUTPUT
           echo "mariadb=$(jq -r '.images.mariadb.version' versions.json)" >> $GITHUB_OUTPUT
           echo "valkey=$(jq -r '.images.valkey.version' versions.json)" >> $GITHUB_OUTPUT
           echo "postgres=$(jq -r '.images.postgres.version' versions.json)" >> $GITHUB_OUTPUT

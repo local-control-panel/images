@@ -9,7 +9,7 @@
  *   table    — markdown table rows for the PR body
  */
 
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -18,49 +18,6 @@ const ROOT = join(__dir, "..", "..");
 const VERSIONS_PATH = join(ROOT, "versions.json");
 
 const DRY_RUN = process.env.DRY_RUN === "true";
-
-// versions.json is the source of truth; these are the other places a version
-// number is duplicated as a docker-compose/`.env` fallback default. Keep them
-// in sync here instead of relying on someone to remember to edit all of them.
-const DEFAULT_FILES = [
-  ".env.example",
-  "mariadb/docker-compose.yml",
-  "valkey/docker-compose.yml",
-  "frankenphp/docker-compose.yml",
-  "postgres/docker-compose.yml",
-  "meilisearch/docker-compose.yml",
-  "stack/docker-compose.yml",
-].map((p) => join(ROOT, p));
-
-function escapeRegExp(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-/** Replaces `${ENV_VAR:-old}` and `ENV_VAR=old` with the new value across DEFAULT_FILES. */
-function propagateDefault(envVar, oldValue, newValue) {
-  const replacements = [
-    [new RegExp(`(\\$\\{${envVar}:-)${escapeRegExp(oldValue)}(\\})`, "g"), `$1${newValue}$2`],
-    [new RegExp(`(^${envVar}=)${escapeRegExp(oldValue)}$`, "gm"), `$1${newValue}`],
-  ];
-  const touched = [];
-  for (const file of DEFAULT_FILES) {
-    if (!existsSync(file)) continue;
-    let text = readFileSync(file, "utf8");
-    let fileChanged = false;
-    for (const [re, repl] of replacements) {
-      const next = text.replace(re, repl);
-      if (next !== text) {
-        text = next;
-        fileChanged = true;
-      }
-    }
-    if (fileChanged) {
-      if (!DRY_RUN) writeFileSync(file, text, "utf8");
-      touched.push(file.slice(ROOT.length + 1));
-    }
-  }
-  return touched;
-}
 
 // ── Docker Hub helpers ────────────────────────────────────────────────────────
 
@@ -78,33 +35,49 @@ async function fetchTags(image, pageSize = 100) {
 }
 
 /**
- * Returns the latest MAJOR.MINOR version tag that:
- *  - matches semver-ish (digits and dots only, optional -suffix)
- *  - is NOT a pre-release (no alpha/beta/rc)
- *  - supports both linux/amd64 AND linux/arm64
+ * Splits a `versions.json` `tagPattern` (e.g. `"{version}-alpine"`,
+ * `"v{version}"`) around its `{version}` placeholder.
  */
-async function latestStableVersion(image, currentMajor) {
-  const tags = await fetchTags(image);
+function splitTagPattern(tagPattern) {
+  const idx = tagPattern.indexOf("{version}");
+  return {
+    prefix: tagPattern.slice(0, idx),
+    suffix: tagPattern.slice(idx + "{version}".length),
+  };
+}
 
-  // Tags may carry a "v" prefix (e.g. meilisearch's "v1.53.1") — strip it
-  // before matching/sorting so those images aren't silently skipped forever.
-  const stable = tags
-    .map((t) => ({ ...t, version: t.name.replace(/^v/, "") }))
-    .filter((t) => {
-      const name = t.version;
-      if (!/^\d+(\.\d+)*(-[a-z0-9]+)?$/.test(name)) return false;
-      if (/alpha|beta|rc|preview|dev/i.test(name)) return false;
-      const images = t.images ?? [];
-      const hasAmd64 = images.some((i) => i.architecture === "amd64" && i.os === "linux");
-      const hasArm64 = images.some((i) => i.architecture === "arm64" && i.os === "linux");
-      return hasAmd64 && hasArm64;
-    });
+/**
+ * Returns the latest MAJOR.MINOR version whose tag - built from `tagPattern`,
+ * e.g. `{version}-alpine` for postgres - actually exists on Docker Hub with:
+ *  - a semver-ish version part (digits and dots only, no alpha/beta/rc)
+ *  - both linux/amd64 AND linux/arm64 support
+ * Matching the exact tag shape (not just any numeric-looking tag) matters
+ * because `build-push.yml` re-tags that specific upstream tag - a bare
+ * numeric tag can go multi-arch before its `-alpine` counterpart does.
+ */
+async function latestStableVersion(image, currentMajor, tagPattern) {
+  const tags = await fetchTags(image);
+  const { prefix, suffix } = splitTagPattern(tagPattern);
+
+  const stable = tags.filter((t) => {
+    const name = t.name;
+    if (!name.startsWith(prefix) || !name.endsWith(suffix)) return false;
+    const version = name.slice(prefix.length, name.length - suffix.length);
+    if (!/^\d+(\.\d+)*$/.test(version)) return false;
+    if (/alpha|beta|rc|preview|dev/i.test(version)) return false;
+    const images = t.images ?? [];
+    const hasAmd64 = images.some((i) => i.architecture === "amd64" && i.os === "linux");
+    const hasArm64 = images.some((i) => i.architecture === "arm64" && i.os === "linux");
+    return hasAmd64 && hasArm64;
+  });
 
   if (stable.length === 0) return null;
 
+  const versionOf = (name) => name.slice(prefix.length, name.length - suffix.length);
+
   stable.sort((a, b) => {
-    const av = a.version.split("-")[0].split(".").map(Number);
-    const bv = b.version.split("-")[0].split(".").map(Number);
+    const av = versionOf(a.name).split(".").map(Number);
+    const bv = versionOf(b.name).split(".").map(Number);
     for (let i = 0; i < Math.max(av.length, bv.length); i++) {
       const diff = (bv[i] ?? 0) - (av[i] ?? 0);
       if (diff !== 0) return diff;
@@ -112,7 +85,7 @@ async function latestStableVersion(image, currentMajor) {
     return 0;
   });
 
-  const best = stable[0].version.split("-")[0];
+  const best = versionOf(stable[0].name);
   const parts = best.split(".");
   if (String(currentMajor).split(".").length === 1 && parts.length >= 1) {
     return parts[0];
@@ -183,7 +156,7 @@ for (const [key, cfg] of Object.entries(versions.images)) {
         extraChanges.phpVersions = result.phpVersions;
       }
     } else {
-      newVersion = await latestStableVersion(cfg.image, cfg.version);
+      newVersion = await latestStableVersion(cfg.image, cfg.version, cfg.tagPattern);
     }
 
     if (!newVersion) {
@@ -202,9 +175,6 @@ for (const [key, cfg] of Object.entries(versions.images)) {
       changed = true;
       if (hasVersionChange) {
         tableRows.push(`| ${key} | \`${old}\` | \`${newVersion}\` |`);
-        const envVar = `${key.toUpperCase()}_VERSION`;
-        const touched = propagateDefault(envVar, old, newVersion);
-        if (touched.length) console.log(`    also updated: ${touched.join(", ")}`);
       }
     } else {
       console.log(`${old} (no change)`);

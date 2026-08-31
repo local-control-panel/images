@@ -8,7 +8,11 @@
       "image": "dunglas/frankenphp",
       "version": "1",
       "phpVersions": ["8.3", "8.4", "8.5"],
-      "phpDefault": "8.3",
+      "runtimes": [
+        { "id": "fp1-php83", "frankenphpVersion": "1", "phpVersion": "8.3", "tag": "1-php8.3", "supportStatus": "supported" },
+        { "id": "fp1-php84", "frankenphpVersion": "1", "phpVersion": "8.4", "tag": "1-php8.4", "supportStatus": "supported" },
+        { "id": "fp1-php85", "frankenphpVersion": "1", "phpVersion": "8.5", "tag": "1-php8.5", "supportStatus": "supported" }
+      ],
       "tagPattern": "{version}-php{phpVersion}",
       "platforms": ["linux/amd64", "linux/arm64"],
       "registryUrl": "https://hub.docker.com/v2/repositories/dunglas/frankenphp/tags",
@@ -25,7 +29,7 @@
     "postgres": {
       "image": "postgres",
       "version": "17",
-      "tagPattern": "{version}",
+      "tagPattern": "{version}-alpine",
       "platforms": ["linux/amd64", "linux/arm64"],
       "registryUrl": "https://hub.docker.com/v2/repositories/library/postgres/tags",
       "notes": "Re-tagged upstream image; postgresql.conf tuning is bind-mounted at runtime. Alpine base. Supports amd64 and arm64."

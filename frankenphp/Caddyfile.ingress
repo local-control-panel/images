@@ -1,0 +1,36 @@
+{
+    # `caddy reload`/`caddy validate` need a live admin API to push config to
+    # - "off" would make every reload fail with "connection refused"
+    # (verified directly: reload exits 1 against an admin-off config, every
+    # time). A container-local Unix socket gets reload working without
+    # exposing an HTTP admin port on any network, let alone publicly - only
+    # `docker exec`/`docker compose exec` into this exact container can
+    # reach it.
+    admin unix//run/caddy-admin.sock
+    persist_config off
+
+    # "public" (default) issues real ACME certificates - correct for a
+    # direct origin or Cloudflare Full (strict). "local" switches every site
+    # to Caddy's internal CA instead - local dev/CI only, see
+    # caddy-global/tls-mode/local.caddyfile.
+    import caddy-global/tls-mode/{$WCP_TLS_MODE:public}.caddyfile
+
+    servers {
+        # "off" is the safe default. Select "cloudflare" only when this
+        # instance receives proxied traffic from Cloudflare; direct clients
+        # remain untrusted even in that mode.
+        import caddy-global/trusted-proxies/{$CADDY_TRUSTED_PROXIES:off}.caddyfile
+    }
+}
+
+# Container liveness endpoint. Independent of any site route or runtime pool.
+http://localhost {
+    @healthcheck path /healthcheck
+    respond @healthcheck "OK" 200
+}
+
+# Ingress is the only public entry point (Compose layout v2). It terminates
+# TLS and reverse-proxies to a runtime pool by domain - it does not execute
+# PHP, mount /var/www, or reach the backend network. Route files are written
+# by the control panel, one per site: docs/devdocs/runtime-platform/README.md.
+import /etc/wcp/ingress.d/*.caddyfile

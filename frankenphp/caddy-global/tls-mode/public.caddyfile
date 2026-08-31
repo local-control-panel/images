@@ -1,0 +1,5 @@
+# Public ACME (Let's Encrypt/ZeroSSL) issues certificates automatically for
+# every bare-domain site block. This is the correct default for a direct
+# origin and for Cloudflare "Full (strict)" - both require a validly issued
+# origin certificate. It requires the domain to actually resolve to this
+# host and ports 80/443 to be reachable for the ACME challenge.

@@ -36,18 +36,38 @@ docker compose -f valkey/docker-compose.yml up -d
 docker compose -f postgres/docker-compose.yml up -d
 ```
 
+These join an *external* `backend` network so several of them can be started
+independently and still reach each other. It defaults to `wcp_backend` — the
+name `stack/docker-compose.v2.yml` creates under project `wcp` — so starting
+one of these alongside an already-running v2 stack lets it join that stack.
+Set `WCP_BACKEND_NETWORK=wp-backend` in `.env` to join the v1 full stack
+below instead (it fixes its network name to `wp-backend`).
+
 Full stack:
 
 ```bash
+# v2 (current layout — ingress + PHP-version runtime pools; see
+# docs/devdocs/runtime-platform/README.md)
+docker compose -p wcp -f stack/docker-compose.v2.yml up -d
+
+# v1 (legacy single-container layout, still the default until the
+# existing-server migration workflow ships)
 docker compose -f stack/docker-compose.yml up -d
 ```
 
 For the per-application FrankenPHP model, Caddy templates, worker policy and
 Cloudflare/direct-origin setup, see [frankenphp/README.md](frankenphp/README.md).
 
-Local mode (uses locally-built `wcp/*` images with configs baked in):
+Local mode (uses locally-built `wcp/*` images instead of the published GHCR
+ones — build them first with `node build.mjs`):
 
 ```bash
+# v2 — WCP_INGRESS_D/WCP_RUNTIME_D/WCP_WWW_ROOT/WCP_CADDY_LOG must point at
+# local sandbox directories (these replace the real /etc/wcp/*, /var/www,
+# /var/log/caddy host paths a real managed server would use)
+docker compose -p wcp -f stack/docker-compose.v2.yml -f stack/docker-compose.v2.local.yml up -d
+
+# v1 (configs baked into the local image, no sandbox dirs to set)
 docker compose -f stack/docker-compose.yml -f stack/docker-compose.local.yml up -d
 ```
 

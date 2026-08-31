@@ -1,0 +1,8 @@
+# Shell scripts must always check out with LF line endings, regardless of
+# platform or a developer's global `core.autocrlf` setting. A CRLF-
+# terminated shebang line fails to exec on Linux ("no such file or
+# directory") - these scripts run as Docker image entrypoints/CMDs, so a
+# corrupted checkout breaks every container built from it, not just local
+# tooling. See RP-08 in docs/devdocs/runtime-platform/README.md in the
+# parent website-control-panel repo.
+*.sh text eol=lf
