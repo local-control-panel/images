@@ -76,6 +76,7 @@ services:
       - ../frankenphp/Caddyfile.runtime:/etc/caddy/Caddyfile:ro
       - ../frankenphp/php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
       - /etc/wcp/runtimes/fp1-php83:/etc/wcp/runtime.d:ro
+      - /etc/wcp/site-services/fp1-php83:/etc/wcp/site-services
       - /var/www:/var/www
       - /var/log/caddy:/var/log/caddy
     environment:
@@ -117,6 +118,7 @@ services:
       - ../frankenphp/Caddyfile.runtime:/etc/caddy/Caddyfile:ro
       - ../frankenphp/php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
       - /etc/wcp/runtimes/fp1-php84:/etc/wcp/runtime.d:ro
+      - /etc/wcp/site-services/fp1-php84:/etc/wcp/site-services
       - /var/www:/var/www
       - /var/log/caddy:/var/log/caddy
     environment:
@@ -150,6 +152,7 @@ services:
       - ../frankenphp/Caddyfile.runtime:/etc/caddy/Caddyfile:ro
       - ../frankenphp/php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
       - /etc/wcp/runtimes/fp1-php85:/etc/wcp/runtime.d:ro
+      - /etc/wcp/site-services/fp1-php85:/etc/wcp/site-services
       - /var/www:/var/www
       - /var/log/caddy:/var/log/caddy
     environment:

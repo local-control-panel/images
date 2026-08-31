@@ -33,7 +33,9 @@ RUN apt-get update \
         msmtp \
         msmtp-mta \
         optipng \
+        s6 \
         unzip \
+        util-linux \
         webp \
     && rm -rf /var/lib/apt/lists/*
 
@@ -106,7 +108,19 @@ COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/wcp-entrypoint
 RUN chmod +x /docker-entrypoint.d/10-msmtp.sh
 
 # Create expected directories
-RUN mkdir -p /etc/frankenphp/Caddyfile.d /etc/msmtprc.d /var/www /var/log/caddy
+RUN mkdir -p \
+        /etc/frankenphp/Caddyfile.d \
+        /etc/msmtprc.d \
+        /etc/s6-top/main-caddy \
+        /etc/s6-top/site-supervisor \
+        /etc/wcp/site-services \
+        /var/www \
+        /var/log/caddy \
+    && printf '#!/bin/sh\nexec frankenphp run --config /etc/caddy/Caddyfile --adapter caddyfile\n' \
+        > /etc/s6-top/main-caddy/run \
+    && printf '#!/bin/sh\nexec s6-svscan /etc/wcp/site-services\n' \
+        > /etc/s6-top/site-supervisor/run \
+    && chmod +x /etc/s6-top/main-caddy/run /etc/s6-top/site-supervisor/run
 
 # Fail an image build immediately if its platform Caddy configuration is
 # invalid. Per-application Caddyfiles are mounted at runtime and are validated
@@ -117,4 +131,4 @@ RUN frankenphp validate --config /etc/caddy/Caddyfile --adapter caddyfile
 # /docker-entrypoint.d helpers. Run them explicitly, then preserve the normal
 # FrankenPHP command.
 ENTRYPOINT ["/usr/local/bin/wcp-entrypoint"]
-CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+CMD ["s6-svscan", "/etc/s6-top"]
