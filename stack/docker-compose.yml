@@ -110,7 +110,7 @@ services:
 
   # ── Database ──────────────────────────────────────────────────────────────
   mariadb:
-    image: mariadb:${MARIADB_VERSION:-11.4}
+    image: mariadb:${MARIADB_VERSION:-12.3}
     container_name: mariadb
     restart: unless-stopped
     command: --innodb-buffer-pool-size=${MARIADB_INNODB_BUFFER_POOL_SIZE:-1024M}
@@ -152,7 +152,7 @@ services:
 
   # ── Object cache ──────────────────────────────────────────────────────────
   valkey:
-    image: valkey/valkey:${VALKEY_VERSION:-8}-alpine
+    image: valkey/valkey:${VALKEY_VERSION:-9}-alpine
     container_name: valkey
     restart: unless-stopped
     command: valkey-server /etc/valkey/valkey.conf
@@ -186,7 +186,7 @@ services:
 
   # ── Relational DB (optional) ──────────────────────────────────────────────
   postgres:
-    image: postgres:${POSTGRES_VERSION:-17}-alpine
+    image: postgres:${POSTGRES_VERSION:-18}-alpine
     container_name: postgres
     restart: unless-stopped
     command: postgres -c config_file=/etc/postgresql/postgresql.conf

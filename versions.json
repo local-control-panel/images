@@ -1,40 +1,59 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "_comment": "Single source of truth for Docker image versions. Updated automatically by .github/workflows/update-docker-versions.yml",
-  "_updated": "2026-08-20",
-  "platforms": ["linux/amd64", "linux/arm64"],
+  "_updated": "2026-08-31",
+  "platforms": [
+    "linux/amd64",
+    "linux/arm64"
+  ],
   "images": {
     "frankenphp": {
       "image": "dunglas/frankenphp",
       "version": "1",
-      "phpVersions": ["8.3", "8.4", "8.5"],
+      "phpVersions": [
+        "8.3",
+        "8.4",
+        "8.5"
+      ],
       "phpDefault": "8.3",
       "tagPattern": "{version}-php{phpVersion}",
-      "platforms": ["linux/amd64", "linux/arm64"],
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
       "registryUrl": "https://hub.docker.com/v2/repositories/dunglas/frankenphp/tags",
       "notes": "Multi-platform. arm64 runs natively on Apple Silicon and AWS Graviton."
     },
     "mariadb": {
       "image": "mariadb",
-      "version": "11.4",
+      "version": "12.3",
       "tagPattern": "{version}",
-      "platforms": ["linux/amd64", "linux/arm64"],
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
       "registryUrl": "https://hub.docker.com/v2/repositories/library/mariadb/tags",
       "notes": "LTS release. Official image supports amd64 and arm64."
     },
     "postgres": {
       "image": "postgres",
-      "version": "17",
+      "version": "18",
       "tagPattern": "{version}",
-      "platforms": ["linux/amd64", "linux/arm64"],
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
       "registryUrl": "https://hub.docker.com/v2/repositories/library/postgres/tags",
       "notes": "Re-tagged upstream image; postgresql.conf tuning is bind-mounted at runtime. Alpine base. Supports amd64 and arm64."
     },
     "valkey": {
       "image": "valkey/valkey",
-      "version": "8",
+      "version": "9",
       "tagPattern": "{version}-alpine",
-      "platforms": ["linux/amd64", "linux/arm64"],
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
       "registryUrl": "https://hub.docker.com/v2/repositories/valkey/valkey/tags",
       "notes": "Redis-compatible. Alpine variant. Supports amd64 and arm64."
     },
@@ -42,7 +61,10 @@
       "image": "getmeili/meilisearch",
       "version": "1.53",
       "tagPattern": "v{version}",
-      "platforms": ["linux/amd64", "linux/arm64"],
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
       "registryUrl": "https://hub.docker.com/v2/repositories/getmeili/meilisearch/tags",
       "notes": "Lightweight full-text search engine. Alternative to Elasticsearch. Rust-based, ~50MB RAM idle."
     }
