@@ -6,12 +6,34 @@
   "images": {
     "frankenphp": {
       "image": "dunglas/frankenphp",
+      "publishedImage": "ghcr.io/local-control-panel/frankenphp",
       "version": "1",
       "phpVersions": ["8.3", "8.4", "8.5"],
       "runtimes": [
-        { "id": "fp1-php83", "frankenphpVersion": "1", "phpVersion": "8.3", "tag": "1-php8.3", "supportStatus": "supported" },
-        { "id": "fp1-php84", "frankenphpVersion": "1", "phpVersion": "8.4", "tag": "1-php8.4", "supportStatus": "supported" },
-        { "id": "fp1-php85", "frankenphpVersion": "1", "phpVersion": "8.5", "tag": "1-php8.5", "supportStatus": "supported" }
+        {
+          "id": "fp1-php83", "frankenphpVersion": "1", "phpVersion": "8.3", "tag": "1-php8.3", "supportStatus": "supported",
+          "digest": "sha256:33a577fe9547132caa9550eb013a18e16fd63bb31e75547cc37bf53c8ec4a746",
+          "platformDigests": {
+            "linux/amd64": "sha256:c7626d9a1c882cb4895ad33e23a25c3a75281c3b721040aed7c7d80ba94e43c5",
+            "linux/arm64": "sha256:a0b860a55c5098879e93872f63590439b4e144fe729f726c2255f497e6b9f670"
+          }
+        },
+        {
+          "id": "fp1-php84", "frankenphpVersion": "1", "phpVersion": "8.4", "tag": "1-php8.4", "supportStatus": "supported",
+          "digest": "sha256:62d288ba3092090f23ea4abf7b963112f9db33cbfd3200c88f02b00de6028b19",
+          "platformDigests": {
+            "linux/amd64": "sha256:81964737eafc7cfac392bc94ca07bf82011f43ff899109e36c31b4a1f409b8f0",
+            "linux/arm64": "sha256:6091f1608642fb19ac987ead5b387329852d29d79ff477b1dac8db2040a73b68"
+          }
+        },
+        {
+          "id": "fp1-php85", "frankenphpVersion": "1", "phpVersion": "8.5", "tag": "1-php8.5", "supportStatus": "supported",
+          "digest": "sha256:f2a63320798264a25921b9b5340338112bba484da8a5f39cad7d99d3173917f0",
+          "platformDigests": {
+            "linux/amd64": "sha256:8423423726c6c00e2be8782894d492787e502a2598e9dbc08d0e604c3a68abbf",
+            "linux/arm64": "sha256:a860084df17b2ed2510054dbe402e57dc4e1e22059dbbffdc5f7272bccfba1bc"
+          }
+        }
       ],
       "tagPattern": "{version}-php{phpVersion}",
       "platforms": ["linux/amd64", "linux/arm64"],
@@ -20,7 +42,13 @@
     },
     "mariadb": {
       "image": "mariadb",
+      "publishedImage": "ghcr.io/local-control-panel/mariadb",
       "version": "11.4",
+      "digest": "sha256:611a2fcc5fa7c6ceb8644c6f74b25ede004ff6c3a6b38c8f8c23d3bbf6c26430",
+      "platformDigests": {
+        "linux/amd64": "sha256:8fade42367c1d0505a2c06cfacd411e1bd81c28995183d00935e09b702fd0042",
+        "linux/arm64": "sha256:728e1c59425ab36f17dac1657f247532460de0c1daae1809ef8828da20b0eae1"
+      },
       "tagPattern": "{version}",
       "platforms": ["linux/amd64", "linux/arm64"],
       "registryUrl": "https://hub.docker.com/v2/repositories/library/mariadb/tags",
@@ -28,7 +56,13 @@
     },
     "postgres": {
       "image": "postgres",
+      "publishedImage": "ghcr.io/local-control-panel/postgres",
       "version": "17",
+      "digest": "sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73",
+      "platformDigests": {
+        "linux/amd64": "sha256:7456ef82e5f5bc43d997f4781bbd7c0d6389bff397564649a356e206ba473aee",
+        "linux/arm64": "sha256:dfc2780980fe6ca2d158bfe4342660db5e4c6431fb969088e543430d09f8d0f2"
+      },
       "tagPattern": "{version}-alpine",
       "platforms": ["linux/amd64", "linux/arm64"],
       "registryUrl": "https://hub.docker.com/v2/repositories/library/postgres/tags",
@@ -36,7 +70,13 @@
     },
     "valkey": {
       "image": "valkey/valkey",
+      "publishedImage": "ghcr.io/local-control-panel/valkey",
       "version": "8",
+      "digest": "sha256:4934d214fd7e091d4ee77b398945b3fd62c6dd0ac71d8b79e2e3cbad8364f3b1",
+      "platformDigests": {
+        "linux/amd64": "sha256:16625369f78a3844287f298799bebb7f4e59d0f7f40e789779d60e890f3d4399",
+        "linux/arm64": "sha256:cfc88ddd78fc49f2da77624b3d2d4f5d6540a907c2ae50f93fe0da77ebb94c5b"
+      },
       "tagPattern": "{version}-alpine",
       "platforms": ["linux/amd64", "linux/arm64"],
       "registryUrl": "https://hub.docker.com/v2/repositories/valkey/valkey/tags",
@@ -44,7 +84,13 @@
     },
     "meilisearch": {
       "image": "getmeili/meilisearch",
+      "publishedImage": "ghcr.io/local-control-panel/meilisearch",
       "version": "1.53",
+      "digest": "sha256:8d6643d86d71fad6ad3cba92cde7ccfce9e4d6c384bda67598eb553571c32431",
+      "platformDigests": {
+        "linux/amd64": "sha256:81ffa96ce6e9a6769775d772742ed3da653ad34960cd6c3b43b98918c07db101",
+        "linux/arm64": "sha256:b4a0a1f9545ae1dd8e12a750fa4416ef3f4b421ed0758c430d0c46182ad233ee"
+      },
       "tagPattern": "v{version}",
       "platforms": ["linux/amd64", "linux/arm64"],
       "registryUrl": "https://hub.docker.com/v2/repositories/getmeili/meilisearch/tags",

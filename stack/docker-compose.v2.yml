@@ -19,10 +19,10 @@ services:
     # ingress never executes PHP, so its image tag must not be entangled
     # with which PHP version the default runtime pool serves (RP-03,
     # docs/devdocs/runtime-platform/README.md). The PHP component is
-    # hardcoded to the catalog's default runtime tuple's tag, not
-    # env-configurable - editing "PHP version" in the Stack UI must not be
-    # able to change what ingress runs.
-    image: ${WCP_INGRESS_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php8.3}
+    # explicitly uses the catalog's PHP 8.3 carrier image (PHP is inert in
+    # this role). The tag remains for readability, while the OCI index digest
+    # makes the actual multi-arch image immutable.
+    image: ${WCP_INGRESS_IMAGE:-ghcr.io/local-control-panel/frankenphp:1-php8.3@sha256:33a577fe9547132caa9550eb013a18e16fd63bb31e75547cc37bf53c8ec4a746}
     restart: unless-stopped
     ports:
       - "80:80"
@@ -70,7 +70,7 @@ services:
     # without the id silently lying about what's actually running (RP-03).
     # Mirrors runtime-fp1-php84/85 below, which already hardcode their own
     # PHP component the same way.
-    image: ${WCP_FRANKENPHP_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php8.3}
+    image: ${WCP_FRANKENPHP_IMAGE:-ghcr.io/local-control-panel/frankenphp:1-php8.3@sha256:33a577fe9547132caa9550eb013a18e16fd63bb31e75547cc37bf53c8ec4a746}
     restart: unless-stopped
     volumes:
       - ../frankenphp/Caddyfile.runtime:/etc/caddy/Caddyfile:ro
@@ -111,7 +111,7 @@ services:
   # (8.3). Ingress reverse-proxies to these by domain. Started on demand via
   # --profile php-8.X - not running by default (mirrors docker-compose.yml).
   runtime-fp1-php84:
-    image: ${WCP_FRANKENPHP_84_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php8.4}
+    image: ${WCP_FRANKENPHP_84_IMAGE:-ghcr.io/local-control-panel/frankenphp:1-php8.4@sha256:62d288ba3092090f23ea4abf7b963112f9db33cbfd3200c88f02b00de6028b19}
     restart: unless-stopped
     profiles: ["php-8.4"]
     volumes:
@@ -145,7 +145,7 @@ services:
       start_period: 15s
 
   runtime-fp1-php85:
-    image: ${WCP_FRANKENPHP_85_IMAGE:-ghcr.io/local-control-panel/frankenphp:${FRANKENPHP_VERSION:-1}-php8.5}
+    image: ${WCP_FRANKENPHP_85_IMAGE:-ghcr.io/local-control-panel/frankenphp:1-php8.5@sha256:f2a63320798264a25921b9b5340338112bba484da8a5f39cad7d99d3173917f0}
     restart: unless-stopped
     profiles: ["php-8.5"]
     volumes:
@@ -177,7 +177,7 @@ services:
 
   # ── Database ──────────────────────────────────────────────────────────────
   mariadb-11:
-    image: ghcr.io/local-control-panel/mariadb:${MARIADB_VERSION:-11.4}
+    image: ${WCP_MARIADB_IMAGE:-ghcr.io/local-control-panel/mariadb:11.4@sha256:611a2fcc5fa7c6ceb8644c6f74b25ede004ff6c3a6b38c8f8c23d3bbf6c26430}
     restart: unless-stopped
     command: --innodb-buffer-pool-size=${MARIADB_INNODB_BUFFER_POOL_SIZE:-1024M}
     environment:
@@ -218,7 +218,7 @@ services:
 
   # ── Object cache ──────────────────────────────────────────────────────────
   valkey-8:
-    image: ghcr.io/local-control-panel/valkey:${VALKEY_VERSION:-8}
+    image: ${WCP_VALKEY_IMAGE:-ghcr.io/local-control-panel/valkey:8@sha256:4934d214fd7e091d4ee77b398945b3fd62c6dd0ac71d8b79e2e3cbad8364f3b1}
     restart: unless-stopped
     command: valkey-server /etc/valkey/valkey.conf
     volumes:
@@ -249,11 +249,100 @@ services:
       timeout: 3s
       retries: 3
 
+  # ── Relational DB (optional) ──────────────────────────────────────────────
+  postgres-17:
+    image: ${WCP_POSTGRES_IMAGE:-ghcr.io/local-control-panel/postgres:17@sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73}
+    restart: unless-stopped
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    networks:
+      - backend
+    profiles:
+      - postgres
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1536M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── Full-text search (optional) ───────────────────────────────────────────
+  # Snapshot restore is a startup-only operation. Export the snapshot outside
+  # meilisearch_data before clearing that volume: even its snapshots/ directory
+  # makes Meilisearch reject --import-snapshot as "database already exists".
+  # The Docker acceptance workflow exercises this sequence with the same
+  # service/image/volume: docker cp the .snapshot to the compose directory;
+  # stop+rm meili-1; clear /meili_data with a one-off --entrypoint sh run; then
+  # `docker compose --profile meilisearch run -d --name meili-restore --no-deps
+  #    -e MEILI_IMPORT_SNAPSHOT=/restore.snapshot
+  #    -v "$PWD/restore.snapshot:/restore.snapshot:ro" meili-1`.
+  # After /health and data checks, remove meili-restore and start meili-1
+  # normally. Never clear the volume until the exported snapshot is non-empty.
+  meili-1:
+    image: ${WCP_MEILISEARCH_IMAGE:-ghcr.io/local-control-panel/meilisearch:1.53@sha256:8d6643d86d71fad6ad3cba92cde7ccfce9e4d6c384bda67598eb553571c32431}
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_MASTER_KEY:?required}
+      MEILI_ENV: production
+      MEILI_DB_PATH: /meili_data
+    volumes:
+      - meilisearch_data:/meili_data
+    networks:
+      - backend
+    profiles:
+      - meilisearch
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:7700/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
 volumes:
   caddy_data:
   caddy_config:
   mariadb_data:
   valkey_data:
+  postgres_data:
+  meilisearch_data:
 
 networks:
   # ingress + runtime pools. No data service is reachable from here.
