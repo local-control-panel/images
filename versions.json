@@ -85,11 +85,11 @@
     "meilisearch": {
       "image": "getmeili/meilisearch",
       "publishedImage": "ghcr.io/local-control-panel/meilisearch",
-      "version": "1.53",
-      "digest": "sha256:8d6643d86d71fad6ad3cba92cde7ccfce9e4d6c384bda67598eb553571c32431",
+      "version": "1.53.2",
+      "digest": "sha256:c94e58ca09662dd6e65e8f1b0fd145767be3da7d5422a863a27b8d2b68e090c9",
       "platformDigests": {
-        "linux/amd64": "sha256:81ffa96ce6e9a6769775d772742ed3da653ad34960cd6c3b43b98918c07db101",
-        "linux/arm64": "sha256:b4a0a1f9545ae1dd8e12a750fa4416ef3f4b421ed0758c430d0c46182ad233ee"
+        "linux/amd64": "sha256:8d9bce7a169fd575290cee1ec2803315afbbb8dfa50122fb10d807ad393005aa",
+        "linux/arm64": "sha256:aaf373c8e8fc611669c912ab1e7e477399ad663af2bb7331036e32335f9219fe"
       },
       "tagPattern": "v{version}",
       "platforms": ["linux/amd64", "linux/arm64"],

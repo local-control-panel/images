@@ -47,13 +47,16 @@ function splitTagPattern(tagPattern) {
 }
 
 /**
- * Returns the latest MAJOR.MINOR version whose tag - built from `tagPattern`,
+ * Returns the latest stable version whose tag - built from `tagPattern`,
  * e.g. `{version}-alpine` for postgres - actually exists on Docker Hub with:
  *  - a semver-ish version part (digits and dots only, no alpha/beta/rc)
  *  - both linux/amd64 AND linux/arm64 support
  * Matching the exact tag shape (not just any numeric-looking tag) matters
  * because `build-push.yml` re-tags that specific upstream tag - a bare
- * numeric tag can go multi-arch before its `-alpine` counterpart does.
+ * numeric tag can go multi-arch before its `-alpine` counterpart does. The
+ * precision already declared in versions.json is preserved: a major pin keeps
+ * tracking majors, a major.minor pin tracks minors, and a full semver pin
+ * receives patch updates.
  */
 async function latestStableVersion(image, currentMajor, tagPattern) {
   const tags = await fetchTags(image);
@@ -87,10 +90,8 @@ async function latestStableVersion(image, currentMajor, tagPattern) {
 
   const best = versionOf(stable[0].name);
   const parts = best.split(".");
-  if (String(currentMajor).split(".").length === 1 && parts.length >= 1) {
-    return parts[0];
-  }
-  return parts.slice(0, 2).join(".");
+  const precision = Math.max(1, String(currentMajor).split(".").length);
+  return parts.slice(0, precision).join(".");
 }
 
 // ── FrankenPHP: check latest PHP version available ────────────────────────────

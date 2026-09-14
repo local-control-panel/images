@@ -1,9 +1,9 @@
 services:
   # Upgrading an existing meilisearch_data volume to a new MEILISEARCH_VERSION
-  # is not a plain image swap - see stack/docker-compose.yml for the
-  # snapshot + `meilisearch --upgrade-db` one-off run procedure.
+  # is not a plain image swap. Use dump/import into a clean data store and keep
+  # a same-version backup of the old volume for rollback; see the stack docs.
   meilisearch:
-    image: ghcr.io/local-control-panel/meilisearch:${MEILISEARCH_VERSION:-1.53}
+    image: ghcr.io/local-control-panel/meilisearch:${MEILISEARCH_VERSION:-1.53.2}
     container_name: meilisearch
     restart: unless-stopped
     env_file:

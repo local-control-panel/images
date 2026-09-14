@@ -79,7 +79,7 @@ Images are automatically built and pushed to GitHub Container Registry on every 
 docker pull ghcr.io/local-control-panel/frankenphp:1-php8.3
 docker pull ghcr.io/local-control-panel/mariadb:11.4
 docker pull ghcr.io/local-control-panel/valkey:8
-docker pull ghcr.io/local-control-panel/meilisearch:1.13
+docker pull ghcr.io/local-control-panel/meilisearch:1.53.2
 ```
 
 ## Version management
