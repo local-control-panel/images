@@ -15,6 +15,10 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: automated-pr-docker-versions
+  cancel-in-progress: true
+
 jobs:
   check-versions:
     name: Check & update image versions
@@ -39,12 +43,15 @@ jobs:
         run: git diff versions.json
 
       - name: Create Pull Request
+        id: cpr
         if: steps.versions.outputs.changed == 'true' && inputs.dry_run != 'true'
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: chore/docker-versions
           delete-branch: true
+          assignees: mrgkanev
+          reviewers: mrgkanev
           commit-message: "chore: update Docker image versions (${{ steps.versions.outputs.date }})"
           title: "chore: Docker image version updates (${{ steps.versions.outputs.date }})"
           body: |
@@ -56,6 +63,16 @@ jobs:
             |---------|-----|-----|
             ${{ steps.versions.outputs.table }}
 
+            ### New major release lines (not applied automatically)
+
+            Major versions are introduced as parallel selectable runtimes/data
+            services with their own lifecycle and volumes. They never replace
+            an existing default automatically.
+
+            | Service | Current line | New upstream candidate |
+            |---------|--------------|------------------------|
+            ${{ steps.versions.outputs.major_candidates }}
+
             ### Platform support
             All images support `linux/amd64` and `linux/arm64` — runs natively on:
             - x86_64 servers (amd64)
@@ -66,3 +83,30 @@ jobs:
           labels: |
             dependencies
             docker
+
+      - name: Close superseded Docker version PRs
+        if: steps.versions.outputs.changed == 'true' && inputs.dry_run != 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { data: pulls } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:chore/docker-versions`,
+            });
+            const current = Number('${{ steps.cpr.outputs.pull-request-number }}');
+            for (const pull of pulls.filter((pull) => pull.number !== current)) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pull.number,
+                body: 'Superseded by a newer automated Docker version update.',
+              });
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pull.number,
+                state: 'closed',
+              });
+            }

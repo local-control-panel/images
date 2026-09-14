@@ -16,6 +16,14 @@ import { fileURLToPath } from "url";
 const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, "..", "..");
 const VERSIONS_PATH = join(ROOT, "versions.json");
+const COMPOSE_PATHS = [
+  join(ROOT, "stack", "docker-compose.yml"),
+  join(ROOT, "stack", "docker-compose.v2.yml"),
+  join(ROOT, "mariadb", "docker-compose.yml"),
+  join(ROOT, "postgres", "docker-compose.yml"),
+  join(ROOT, "valkey", "docker-compose.yml"),
+  join(ROOT, "meilisearch", "docker-compose.yml"),
+];
 
 const DRY_RUN = process.env.DRY_RUN === "true";
 
@@ -47,7 +55,8 @@ function splitTagPattern(tagPattern) {
 }
 
 /**
- * Returns the latest stable version whose tag - built from `tagPattern`,
+ * Returns the latest stable version on the currently selected release line
+ * whose tag is built from `tagPattern`,
  * e.g. `{version}-alpine` for postgres - actually exists on Docker Hub with:
  *  - a semver-ish version part (digits and dots only, no alpha/beta/rc)
  *  - both linux/amd64 AND linux/arm64 support
@@ -55,8 +64,9 @@ function splitTagPattern(tagPattern) {
  * because `build-push.yml` re-tags that specific upstream tag - a bare
  * numeric tag can go multi-arch before its `-alpine` counterpart does. The
  * precision already declared in versions.json is preserved: a major pin keeps
- * tracking majors, a major.minor pin tracks minors, and a full semver pin
- * receives patch updates.
+ * tracking that major, a major.minor pin keeps that line, and a full semver pin
+ * receives patches on its major.minor line. A newer major is reported
+ * separately; it is never substituted for an existing user-selectable line.
  */
 async function latestStableVersion(image, currentMajor, tagPattern) {
   const tags = await fetchTags(image);
@@ -88,10 +98,35 @@ async function latestStableVersion(image, currentMajor, tagPattern) {
     return 0;
   });
 
-  const best = versionOf(stable[0].name);
+  const overallBest = versionOf(stable[0].name);
+  const currentParts = String(currentMajor).split(".");
+  const lineParts = currentParts.slice(0, Math.min(2, currentParts.length));
+  const compatible = stable.find((tag) => {
+    const candidate = versionOf(tag.name).split(".");
+    return lineParts.every((part, index) => candidate[index] === part);
+  });
+  if (!compatible) return null;
+
+  const best = versionOf(compatible.name);
   const parts = best.split(".");
-  const precision = Math.max(1, String(currentMajor).split(".").length);
-  return parts.slice(0, precision).join(".");
+  const precision = Math.max(1, currentParts.length);
+  const platformDigests = Object.fromEntries(
+    (compatible.images ?? [])
+      .filter(
+        (image) =>
+          image.os === "linux" &&
+          ["amd64", "arm64"].includes(image.architecture) &&
+          /^sha256:[a-f0-9]{64}$/.test(image.digest ?? ""),
+      )
+      .map((image) => [`linux/${image.architecture}`, image.digest]),
+  );
+  return {
+    version: parts.slice(0, precision).join("."),
+    digest: compatible.digest,
+    platformDigests,
+    newerMajor:
+      overallBest.split(".")[0] !== currentParts[0] ? overallBest : null,
+  };
 }
 
 // ── FrankenPHP: check latest PHP version available ────────────────────────────
@@ -137,7 +172,9 @@ async function latestFrankenPhpVersion(currentVersion) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 const versions = JSON.parse(readFileSync(VERSIONS_PATH, "utf8"));
+const originalVersions = structuredClone(versions);
 const tableRows = [];
+const majorRows = [];
 let changed = false;
 
 console.log("Checking Docker Hub for latest versions…\n");
@@ -157,7 +194,21 @@ for (const [key, cfg] of Object.entries(versions.images)) {
         extraChanges.phpVersions = result.phpVersions;
       }
     } else {
-      newVersion = await latestStableVersion(cfg.image, cfg.version, cfg.tagPattern);
+      const result = await latestStableVersion(cfg.image, cfg.version, cfg.tagPattern);
+      newVersion = result?.version ?? null;
+      if (result?.digest && result.digest !== cfg.digest) {
+        extraChanges.digest = result.digest;
+      }
+      if (
+        result &&
+        Object.keys(result.platformDigests).length === 2 &&
+        JSON.stringify(result.platformDigests) !== JSON.stringify(cfg.platformDigests)
+      ) {
+        extraChanges.platformDigests = result.platformDigests;
+      }
+      if (result?.newerMajor) {
+        majorRows.push(`| ${key} | \`${cfg.version}\` | \`${result.newerMajor}\` |`);
+      }
     }
 
     if (!newVersion) {
@@ -170,12 +221,16 @@ for (const [key, cfg] of Object.entries(versions.images)) {
     const hasExtraChanges = Object.keys(extraChanges).length > 0;
 
     if (hasVersionChange || hasExtraChanges) {
-      console.log(`${old} → ${newVersion}`);
+      console.log(
+        hasVersionChange ? `${old} → ${newVersion}` : `${old} (digest refresh)`,
+      );
       versions.images[key].version = newVersion;
       Object.assign(versions.images[key], extraChanges);
       changed = true;
       if (hasVersionChange) {
         tableRows.push(`| ${key} | \`${old}\` | \`${newVersion}\` |`);
+      } else {
+        tableRows.push(`| ${key} | \`${old}\` | digest refresh |`);
       }
     } else {
       console.log(`${old} (no change)`);
@@ -190,6 +245,24 @@ versions._updated = today;
 
 if (changed && !DRY_RUN) {
   writeFileSync(VERSIONS_PATH, JSON.stringify(versions, null, 2) + "\n", "utf8");
+  for (const path of COMPOSE_PATHS) {
+    let content = readFileSync(path, "utf8");
+    const original = content;
+    for (const [key, next] of Object.entries(versions.images)) {
+      const previous = originalVersions.images[key];
+      if (!previous || key === "frankenphp") continue;
+      content = content
+        .replaceAll(
+          `${previous.publishedImage}:${previous.version}@${previous.digest}`,
+          `${next.publishedImage}:${next.version}@${next.digest}`,
+        )
+        .replaceAll(
+          `${key.toUpperCase()}_VERSION:-${previous.version}`,
+          `${key.toUpperCase()}_VERSION:-${next.version}`,
+        );
+    }
+    if (content !== original) writeFileSync(path, content, "utf8");
+  }
   console.log(`\n✓ Written ${VERSIONS_PATH}`);
 } else if (changed && DRY_RUN) {
   console.log("\n[dry-run] Would write updated versions.json");
@@ -203,8 +276,12 @@ if (outputFile) {
   appendFileSync(outputFile, `changed=${changed}\n`);
   appendFileSync(outputFile, `date=${today}\n`);
   appendFileSync(outputFile, `table=${tableRows.join("\\n")}\n`);
+  appendFileSync(outputFile, `major_candidates=${majorRows.join("\\n")}\n`);
 } else {
   console.log(`\nchanged=${changed}`);
   console.log(`date=${today}`);
   if (tableRows.length) console.log("\nTable rows:\n" + tableRows.join("\n"));
+  if (majorRows.length) {
+    console.log("\nNew major release lines (not auto-updated):\n" + majorRows.join("\n"));
+  }
 }
