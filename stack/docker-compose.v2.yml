@@ -343,6 +343,10 @@ volumes:
   valkey_data:
   postgres_data:
   meilisearch_data:
+    # Blue/green Meilisearch upgrades import into a new volume and atomically
+    # switch this pointer together with WCP_MEILISEARCH_IMAGE. The default
+    # preserves the existing Compose volume name on already-managed servers.
+    name: ${WCP_MEILISEARCH_VOLUME:-wcp_meilisearch_data}
 
 networks:
   # ingress + runtime pools. No data service is reachable from here.
