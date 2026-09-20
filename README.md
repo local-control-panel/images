@@ -4,12 +4,12 @@ Custom Docker images for the WCP hosting stack — each one is a thin wrapper ar
 
 ## Images
 
-| Image | Base | Description |
-|---|---|---|
-| `frankenphp` | `dunglas/frankenphp` | PHP runtime + Caddy web server, WordPress-tuned |
-| `mariadb` | `mariadb` | MariaDB with performance-tuned `conf.d` |
-| `valkey` | `valkey/valkey` | Redis-compatible object cache |
-| `postgres` | `postgres` | PostgreSQL (official image, no custom build) |
+| Image         | Base                   | Description                                                     |
+| ------------- | ---------------------- | --------------------------------------------------------------- |
+| `frankenphp`  | `dunglas/frankenphp`   | PHP runtime + Caddy web server, WordPress-tuned                 |
+| `mariadb`     | `mariadb`              | MariaDB with performance-tuned `conf.d`                         |
+| `valkey`      | `valkey/valkey`        | Redis-compatible object cache                                   |
+| `postgres`    | `postgres`             | PostgreSQL (official image, no custom build)                    |
 | `meilisearch` | `getmeili/meilisearch` | Lightweight full-text search engine (Elasticsearch alternative) |
 
 All images are built for `linux/amd64` and `linux/arm64` (Apple Silicon, AWS Graviton, Raspberry Pi).
@@ -36,7 +36,7 @@ docker compose -f valkey/docker-compose.yml up -d
 docker compose -f postgres/docker-compose.yml up -d
 ```
 
-These join an *external* `backend` network so several of them can be started
+These join an _external_ `backend` network so several of them can be started
 independently and still reach each other. It defaults to `wcp_backend` — the
 name `stack/docker-compose.v2.yml` creates under project `wcp` — so starting
 one of these alongside an already-running v2 stack lets it join that stack.
