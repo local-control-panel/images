@@ -177,7 +177,7 @@ services:
 
   # ── Database ──────────────────────────────────────────────────────────────
   mariadb-11:
-    image: ${WCP_MARIADB_IMAGE:-ghcr.io/local-control-panel/mariadb:11.4@sha256:80494b9810694179889f7281ec44ca928241df577159c0356a1070e2e94616a1}
+    image: ${WCP_MARIADB_IMAGE:-ghcr.io/local-control-panel/mariadb:11.4@sha256:70cc072b29b4a89ae07abb2d4da2c64678a7f2dfe092751bb51c87d67dc1338b}
     restart: unless-stopped
     command: --innodb-buffer-pool-size=${MARIADB_INNODB_BUFFER_POOL_SIZE:-1024M}
     environment:
@@ -218,7 +218,7 @@ services:
 
   # ── Object cache ──────────────────────────────────────────────────────────
   valkey-8:
-    image: ${WCP_VALKEY_IMAGE:-ghcr.io/local-control-panel/valkey:8@sha256:d2e18f3410b6f616de1417f570fa55261af2898b9c5b2cfb6781ce2373ea43d1}
+    image: ${WCP_VALKEY_IMAGE:-ghcr.io/local-control-panel/valkey:8@sha256:081c2f5cb575efc901aa80ff9cdbd1ec6a301682fd35e1ebb4b0990a4a4a8507}
     restart: unless-stopped
     command: valkey-server /etc/valkey/valkey.conf
     volumes:
@@ -251,7 +251,7 @@ services:
 
   # ── Relational DB (optional) ──────────────────────────────────────────────
   postgres-17:
-    image: ${WCP_POSTGRES_IMAGE:-ghcr.io/local-control-panel/postgres:17@sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73}
+    image: ${WCP_POSTGRES_IMAGE:-ghcr.io/local-control-panel/postgres:17@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24}
     restart: unless-stopped
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
     environment:

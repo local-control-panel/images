@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "_comment": "Single source of truth for Docker image versions. Updated automatically by .github/workflows/update-docker-versions.yml",
-  "_updated": "2026-09-14",
+  "_updated": "2026-09-21",
   "platforms": [
     "linux/amd64",
     "linux/arm64"
@@ -66,10 +66,10 @@
       "image": "mariadb",
       "publishedImage": "ghcr.io/local-control-panel/mariadb",
       "version": "11.4",
-      "digest": "sha256:80494b9810694179889f7281ec44ca928241df577159c0356a1070e2e94616a1",
+      "digest": "sha256:70cc072b29b4a89ae07abb2d4da2c64678a7f2dfe092751bb51c87d67dc1338b",
       "platformDigests": {
-        "linux/amd64": "sha256:ebf0b3e4493368caed4ed6dea8e9a8be0f52bf9844aa185b3e56b72a83838fb6",
-        "linux/arm64": "sha256:eebec83fe506646139690097318f650e0cb294f7436123b8d4c5866f2bd46d03"
+        "linux/amd64": "sha256:d3ffa843465bed0d26460bee9d4db4f27143538a4f3d30aaf7ecb32e9581563b",
+        "linux/arm64": "sha256:3f82dd1da1dded5fad2e5659fbeabdd2560599641f9bddb46c88a6a23d1d44ee"
       },
       "tagPattern": "{version}",
       "platforms": [
@@ -83,10 +83,10 @@
       "image": "postgres",
       "publishedImage": "ghcr.io/local-control-panel/postgres",
       "version": "17",
-      "digest": "sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73",
+      "digest": "sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24",
       "platformDigests": {
-        "linux/amd64": "sha256:7456ef82e5f5bc43d997f4781bbd7c0d6389bff397564649a356e206ba473aee",
-        "linux/arm64": "sha256:dfc2780980fe6ca2d158bfe4342660db5e4c6431fb969088e543430d09f8d0f2"
+        "linux/amd64": "sha256:aa90e97ee862e558111d34cfb8b2c4bec768c2b039fb791341686928560263b3",
+        "linux/arm64": "sha256:0b2882c46a2b8d8e148431b333394348cf4d7f15aec6df7f17d51dc641e56cfa"
       },
       "tagPattern": "{version}-alpine",
       "platforms": [
@@ -100,10 +100,10 @@
       "image": "valkey/valkey",
       "publishedImage": "ghcr.io/local-control-panel/valkey",
       "version": "8",
-      "digest": "sha256:d2e18f3410b6f616de1417f570fa55261af2898b9c5b2cfb6781ce2373ea43d1",
+      "digest": "sha256:081c2f5cb575efc901aa80ff9cdbd1ec6a301682fd35e1ebb4b0990a4a4a8507",
       "platformDigests": {
-        "linux/amd64": "sha256:e55eb7bfbce02957d1a91fb1e26d69aa36eb18f77bf9f86ff6eff81f864b13b7",
-        "linux/arm64": "sha256:3e0751bb90e44d5d3a2b321bb36d219d7bb86a275ad908feb06567e0f6db77c0"
+        "linux/amd64": "sha256:32627109abf6f741121096b45c732f758876803efd7b2e1018ebc0350d117119",
+        "linux/arm64": "sha256:6bd0360157519e3de7c49f6bae7d2bdfab574083bd7d266182db36b1646b0936"
       },
       "tagPattern": "{version}-alpine",
       "platforms": [
