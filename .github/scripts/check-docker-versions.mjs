@@ -179,7 +179,81 @@ let changed = false;
 
 console.log("Checking Docker Hub for latest versions…\n");
 
+/**
+ * Services shaped as `{ runtimes: [...] }` (multiple coexisting major
+ * lines, each its own compose service + volume - see image_catalog.rs)
+ * instead of a single flat `version`/`digest`. Each runtime's line is
+ * bumped independently (patch/minor only, same `latestStableVersion`
+ * line-matching rule as everything else); a brand new major never becomes
+ * a new runtime entry here - that also needs a compose service block and
+ * Rust catalog wiring, so it stays a reported candidate for a human to add.
+ */
+const RUNTIME_ARRAY_SERVICES = new Set(["mariadb"]);
+
+async function checkRuntimeArrayService(key, cfg) {
+  let changed = false;
+  const extraByRuntime = {};
+  let highestMajorSeen = -1;
+  let newestMajorCandidate = null;
+
+  for (const tuple of cfg.runtimes) {
+    process.stdout.write(`  ${key}/${tuple.id} (${cfg.image}) … `);
+    const result = await latestStableVersion(cfg.image, tuple.version, cfg.tagPattern);
+    if (!result) {
+      console.log("⚠ could not determine latest version, skipping");
+      continue;
+    }
+    const extra = {};
+    if (result.version !== tuple.version) extra.version = result.version;
+    if (result.digest !== tuple.digest) extra.digest = result.digest;
+    if (
+      Object.keys(result.platformDigests).length === 2 &&
+      JSON.stringify(result.platformDigests) !== JSON.stringify(tuple.platformDigests)
+    ) {
+      extra.platformDigests = result.platformDigests;
+    }
+
+    const major = Number(tuple.majorLine);
+    if (Number.isFinite(major)) highestMajorSeen = Math.max(highestMajorSeen, major);
+    if (result.newerMajor) newestMajorCandidate = result.newerMajor;
+
+    if (Object.keys(extra).length > 0) {
+      console.log(extra.version ? `${tuple.version} → ${extra.version}` : `${tuple.version} (digest refresh)`);
+      extraByRuntime[tuple.id] = extra;
+      changed = true;
+      tableRows.push(
+        `| ${key} (${tuple.id}) | \`${tuple.version}\` | \`${extra.version ?? "digest refresh"}\` |`,
+      );
+    } else {
+      console.log(`${tuple.version} (no change)`);
+    }
+  }
+
+  if (newestMajorCandidate) {
+    const newestMajor = Number(newestMajorCandidate.split(".")[0]);
+    if (Number.isFinite(newestMajor) && newestMajor > highestMajorSeen) {
+      majorRows.push(`| ${key} | current lines: ${cfg.runtimes.map((t) => t.majorLine).join(", ")} | \`${newestMajorCandidate}\` |`);
+    }
+  }
+
+  if (changed) {
+    versions.images[key].runtimes = cfg.runtimes.map((tuple) =>
+      extraByRuntime[tuple.id] ? { ...tuple, ...extraByRuntime[tuple.id] } : tuple,
+    );
+  }
+  return changed;
+}
+
 for (const [key, cfg] of Object.entries(versions.images)) {
+  if (RUNTIME_ARRAY_SERVICES.has(key)) {
+    try {
+      if (await checkRuntimeArrayService(key, cfg)) changed = true;
+    } catch (err) {
+      console.log(`ERROR: ${err.message}`);
+    }
+    continue;
+  }
+
   process.stdout.write(`  ${key} (${cfg.image}) … `);
   try {
     let newVersion;
@@ -251,6 +325,24 @@ if (changed && !DRY_RUN) {
     for (const [key, next] of Object.entries(versions.images)) {
       const previous = originalVersions.images[key];
       if (!previous || key === "frankenphp") continue;
+
+      if (RUNTIME_ARRAY_SERVICES.has(key)) {
+        for (const nextTuple of next.runtimes) {
+          const prevTuple = previous.runtimes.find((t) => t.id === nextTuple.id);
+          if (!prevTuple) continue;
+          content = content
+            .replaceAll(
+              `${previous.publishedImage}:${prevTuple.version}@${prevTuple.digest}`,
+              `${next.publishedImage}:${nextTuple.version}@${nextTuple.digest}`,
+            )
+            .replaceAll(
+              `${key.toUpperCase()}_VERSION:-${prevTuple.version}`,
+              `${key.toUpperCase()}_VERSION:-${nextTuple.version}`,
+            );
+        }
+        continue;
+      }
+
       content = content
         .replaceAll(
           `${previous.publishedImage}:${previous.version}@${previous.digest}`,

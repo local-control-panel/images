@@ -65,19 +65,26 @@
     "mariadb": {
       "image": "mariadb",
       "publishedImage": "ghcr.io/local-control-panel/mariadb",
-      "version": "11.4",
-      "digest": "sha256:80494b9810694179889f7281ec44ca928241df577159c0356a1070e2e94616a1",
-      "platformDigests": {
-        "linux/amd64": "sha256:ebf0b3e4493368caed4ed6dea8e9a8be0f52bf9844aa185b3e56b72a83838fb6",
-        "linux/arm64": "sha256:eebec83fe506646139690097318f650e0cb294f7436123b8d4c5866f2bd46d03"
-      },
       "tagPattern": "{version}",
+      "runtimes": [
+        {
+          "id": "mariadb-11",
+          "majorLine": "11",
+          "version": "11.4",
+          "digest": "sha256:80494b9810694179889f7281ec44ca928241df577159c0356a1070e2e94616a1",
+          "platformDigests": {
+            "linux/amd64": "sha256:ebf0b3e4493368caed4ed6dea8e9a8be0f52bf9844aa185b3e56b72a83838fb6",
+            "linux/arm64": "sha256:eebec83fe506646139690097318f650e0cb294f7436123b8d4c5866f2bd46d03"
+          },
+          "supportStatus": "supported"
+        }
+      ],
       "platforms": [
         "linux/amd64",
         "linux/arm64"
       ],
       "registryUrl": "https://hub.docker.com/v2/repositories/library/mariadb/tags",
-      "notes": "LTS release. Official image supports amd64 and arm64."
+      "notes": "LTS release. Official image supports amd64 and arm64. A new major line is added as an additional entry in `runtimes` (its own compose service + volume) rather than replacing this one - existing sites keep pointing at whichever line they were created on."
     },
     "postgres": {
       "image": "postgres",

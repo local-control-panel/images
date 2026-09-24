@@ -24,7 +24,8 @@ jobs:
       frankenphp: ${{ steps.v.outputs.frankenphp }}
       frankenphp_php_versions: ${{ steps.v.outputs.frankenphp_php_versions }}
       frankenphp_php_default: ${{ steps.v.outputs.frankenphp_php_default }}
-      mariadb: ${{ steps.v.outputs.mariadb }}
+      mariadb_runtimes: ${{ steps.v.outputs.mariadb_runtimes }}
+      mariadb_default: ${{ steps.v.outputs.mariadb_default }}
       valkey: ${{ steps.v.outputs.valkey }}
       postgres: ${{ steps.v.outputs.postgres }}
       meilisearch: ${{ steps.v.outputs.meilisearch }}
@@ -55,7 +56,14 @@ jobs:
             | .[(length - 1) / 2 | floor]
             | .phpVersion
           ' versions.json)" >> $GITHUB_OUTPUT
-          echo "mariadb=$(jq -r '.images.mariadb.version' versions.json)" >> $GITHUB_OUTPUT
+          # mariadb is `runtimes[]` (one or more coexisting major lines, see
+          # image_catalog.rs) rather than a single version - the default
+          # line is whichever "supported" entry comes first, matching
+          # default_mariadb_runtime_id's array-order rule (DB majors aren't
+          # interchangeable like PHP versions, so this is curated order, not
+          # a computed middle).
+          echo "mariadb_runtimes=$(jq -c '.images.mariadb.runtimes' versions.json)" >> $GITHUB_OUTPUT
+          echo "mariadb_default=$(jq -r '[.images.mariadb.runtimes[] | select(.supportStatus == "supported")] | .[0].id' versions.json)" >> $GITHUB_OUTPUT
           echo "valkey=$(jq -r '.images.valkey.version' versions.json)" >> $GITHUB_OUTPUT
           echo "postgres=$(jq -r '.images.postgres.version' versions.json)" >> $GITHUB_OUTPUT
           echo "meilisearch=$(jq -r '.images.meilisearch.version' versions.json)" >> $GITHUB_OUTPUT
@@ -223,9 +231,18 @@ jobs:
           sarif_file: trivy-frankenphp.sarif
           category: trivy-frankenphp-php${{ matrix.php }}
 
+  # One job per coexisting MariaDB major line (images/versions.json's
+  # images.mariadb.runtimes) rather than a single version - each line keeps
+  # its own tag/digest so promoting a new major never retags or replaces an
+  # existing one (see the note on images.mariadb in versions.json and
+  # image_catalog.rs's DbRuntimeTuple).
   mariadb:
     needs: versions
     if: github.event_name == 'workflow_dispatch' || needs.versions.outputs.mariadb_changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime: ${{ fromJson(needs.versions.outputs.mariadb_runtimes) }}
     runs-on: ubuntu-latest
     steps:
       - uses: docker/setup-buildx-action@v4
@@ -236,29 +253,37 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute tags
+        id: tags
+        run: |
+          TAGS="ghcr.io/${{ github.repository_owner }}/mariadb:${{ matrix.runtime.version }}"
+          if [ "${{ matrix.runtime.id }}" = "${{ needs.versions.outputs.mariadb_default }}" ]; then
+            TAGS="$TAGS,ghcr.io/${{ github.repository_owner }}/mariadb:latest"
+          fi
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+
       # No custom Dockerfile — config is delivered via bind mount at runtime
       # (see mariadb/docker-compose.yml), so we just re-tag the upstream
       # multi-arch image under our fixed ghcr.io tag instead of rebuilding it.
       - name: Re-tag upstream image
         run: |
           docker buildx imagetools create \
-            --tag ghcr.io/${{ github.repository_owner }}/mariadb:${{ needs.versions.outputs.mariadb }} \
-            --tag ghcr.io/${{ github.repository_owner }}/mariadb:latest \
-            mariadb:${{ needs.versions.outputs.mariadb }}
+            $(echo "${{ steps.tags.outputs.tags }}" | tr ',' '\n' | sed 's/^/--tag /' | tr '\n' ' ') \
+            mariadb:${{ matrix.runtime.version }}
 
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/mariadb:${{ needs.versions.outputs.mariadb }}
+          image-ref: ghcr.io/${{ github.repository_owner }}/mariadb:${{ matrix.runtime.version }}
           format: sarif
-          output: trivy-mariadb.sarif
+          output: trivy-mariadb-${{ matrix.runtime.id }}.sarif
           severity: CRITICAL,HIGH
           ignore-unfixed: true
 
       - uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
-          sarif_file: trivy-mariadb.sarif
-          category: trivy-mariadb
+          sarif_file: trivy-mariadb-${{ matrix.runtime.id }}.sarif
+          category: trivy-mariadb-${{ matrix.runtime.id }}
 
   valkey:
     needs: versions
