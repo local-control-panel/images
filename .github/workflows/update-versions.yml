@@ -2,8 +2,8 @@ name: Update Docker Versions
 
 on:
   schedule:
-    # Every Monday at 08:00 UTC
-    - cron: "0 8 * * 1"
+    # 08:00 UTC on the 1st of every month
+    - cron: "0 8 1 * *"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -57,7 +57,7 @@ jobs:
           body: |
             ## Docker image version updates
 
-            Automated weekly check detected new versions.
+            Automated monthly check detected new versions.
 
             | Service | Old | New |
             |---------|-----|-----|
