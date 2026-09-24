@@ -1,9 +1,6 @@
 # WordPress hosting stack — Compose layout v2 (FrankenPHP ingress + runtime
-# pools). See docs/devdocs/runtime-platform/README.md.
-#
-# Coexists with docker-compose.yml (layout v1); v1 stays the default until
-# the existing-server migration workflow ships. This file is currently used
-# for new test installations only.
+# pools). See docs/devdocs/runtime-platform/README.md. The only layout in
+# use; there is no legacy v1 single-container stack to coexist with.
 #
 # 1. cp ../.env.example ../.env
 # 2. Edit ../.env (versions + passwords)

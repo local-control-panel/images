@@ -4,11 +4,12 @@
 # (/etc/wcp/ingress.d, /etc/wcp/runtime.d, /var/www, /var/log/caddy) - those
 # host paths only make sense on an actually managed server.
 #
-# Unlike docker-compose.local.yml (v1), this does NOT drop the Caddyfile /
-# php.ini bind mounts: v2's ingress and runtime-pool Caddyfiles
-# (Caddyfile.ingress / Caddyfile.runtime) aren't baked into any image -
-# frankenphp/Dockerfile only bakes the single legacy v1 Caddyfile - so the
-# bind mount is the only way either role gets its actual config.
+# Unlike frankenphp/docker-compose.yml's standalone single-container setup,
+# this does NOT drop the Caddyfile / php.ini bind mounts: v2's ingress and
+# runtime-pool Caddyfiles (Caddyfile.ingress / Caddyfile.runtime) aren't
+# baked into any image - frankenphp/Dockerfile only bakes the single
+# Caddyfile used for that standalone setup - so the bind mount is the only
+# way either role gets its actual config.
 #
 # Manual usage:
 #   docker compose -f docker-compose.v2.yml -f docker-compose.v2.local.yml up -d
