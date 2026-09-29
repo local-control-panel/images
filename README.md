@@ -48,6 +48,9 @@ docs/devdocs/runtime-platform/README.md in the control panel repo):
 docker compose -p wcp -f stack/docker-compose.v2.yml up -d
 ```
 
+For CMS-specific deployment checks and current automation boundaries, see
+[stack/README.md](stack/README.md).
+
 For the per-application FrankenPHP model, Caddy templates, worker policy and
 Cloudflare/direct-origin setup, see [frankenphp/README.md](frankenphp/README.md).
 

@@ -1,4 +1,4 @@
-# WordPress hosting stack — Compose layout v2 (FrankenPHP ingress + runtime
+# PHP application hosting stack — Compose layout v2 (FrankenPHP ingress + runtime
 # pools). See docs/devdocs/runtime-platform/README.md. The only layout in
 # use; there is no legacy v1 single-container stack to coexist with.
 #
