@@ -77,9 +77,6 @@ services:
       - /var/www:/var/www
       - /var/log/caddy:/var/log/caddy
       - valkey_socket:/run/valkey:ro
-    # valkey/valkey:8-alpine uses GID 1000 for its valkey group.
-    group_add:
-      - "1000"
     environment:
       CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
     networks:
@@ -123,8 +120,6 @@ services:
       - /var/www:/var/www
       - /var/log/caddy:/var/log/caddy
       - valkey_socket:/run/valkey:ro
-    group_add:
-      - "1000"
     environment:
       CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
     networks:
@@ -160,8 +155,6 @@ services:
       - /var/www:/var/www
       - /var/log/caddy:/var/log/caddy
       - valkey_socket:/run/valkey:ro
-    group_add:
-      - "1000"
     environment:
       CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
     networks:
@@ -263,7 +256,7 @@ services:
     restart: unless-stopped
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
     environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
       POSTGRES_DB: ${POSTGRES_DB:-app}
       POSTGRES_USER: ${POSTGRES_USER:-app}
     volumes:

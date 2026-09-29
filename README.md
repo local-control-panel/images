@@ -55,10 +55,12 @@ Cloudflare/direct-origin setup, see [frankenphp/README.md](frankenphp/README.md)
 
 In the full stack, PHP runtime containers can connect to Valkey through
 `/run/valkey/valkey.sock`. The socket is shared through a dedicated volume,
-mounted read-only in each runtime; its mode is `770`. The Valkey image uses
-group ID `1000`, which the runtime containers join through `group_add`.
+mounted read-only in each runtime. Its mode is `777` because each site process
+runs under a dedicated UID/GID without supplementary groups; only containers
+with the socket volume mounted can reach it.
 Applications and CMSs choose their own Redis-compatible client and point it
-at that socket path. Use a distinct database or key prefix for each application.
+at that socket path. Use a distinct database or key prefix for each application
+to avoid key collisions; neither provides a security boundary between sites.
 
 Valkey also listens on port `6379` on the private `backend` network. This keeps
 network clients and control-panel commands working. The standalone Valkey
