@@ -76,6 +76,10 @@ services:
       - /etc/wcp/site-services/fp1-php83:/etc/wcp/site-services
       - /var/www:/var/www
       - /var/log/caddy:/var/log/caddy
+      - valkey_socket:/run/valkey:ro
+    # valkey/valkey:8-alpine uses GID 1000 for its valkey group.
+    group_add:
+      - "1000"
     environment:
       CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
     networks:
@@ -118,6 +122,9 @@ services:
       - /etc/wcp/site-services/fp1-php84:/etc/wcp/site-services
       - /var/www:/var/www
       - /var/log/caddy:/var/log/caddy
+      - valkey_socket:/run/valkey:ro
+    group_add:
+      - "1000"
     environment:
       CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
     networks:
@@ -152,6 +159,9 @@ services:
       - /etc/wcp/site-services/fp1-php85:/etc/wcp/site-services
       - /var/www:/var/www
       - /var/log/caddy:/var/log/caddy
+      - valkey_socket:/run/valkey:ro
+    group_add:
+      - "1000"
     environment:
       CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
     networks:
@@ -221,6 +231,7 @@ services:
     volumes:
       - ../valkey/valkey.conf:/etc/valkey/valkey.conf:ro
       - valkey_data:/data
+      - valkey_socket:/run/valkey
     networks:
       - backend
     deploy:
@@ -241,7 +252,7 @@ services:
         max-size: "10m"
         max-file: "3"
     healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
+      test: ["CMD", "valkey-cli", "-s", "/run/valkey/valkey.sock", "ping"]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -338,6 +349,7 @@ volumes:
   caddy_config:
   mariadb_data:
   valkey_data:
+  valkey_socket:
   postgres_data:
   meilisearch_data:
     # Blue/green Meilisearch upgrades import into a new volume and atomically

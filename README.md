@@ -51,6 +51,20 @@ docker compose -p wcp -f stack/docker-compose.v2.yml up -d
 For the per-application FrankenPHP model, Caddy templates, worker policy and
 Cloudflare/direct-origin setup, see [frankenphp/README.md](frankenphp/README.md).
 
+## Valkey connections
+
+In the full stack, PHP runtime containers can connect to Valkey through
+`/run/valkey/valkey.sock`. The socket is shared through a dedicated volume,
+mounted read-only in each runtime; its mode is `770`. The Valkey image uses
+group ID `1000`, which the runtime containers join through `group_add`.
+Applications and CMSs choose their own Redis-compatible client and point it
+at that socket path. Use a distinct database or key prefix for each application.
+
+Valkey also listens on port `6379` on the private `backend` network. This keeps
+network clients and control-panel commands working. The standalone Valkey
+Compose file uses that network connection; its socket is not shared with
+separately started application containers.
+
 Local mode (uses locally-built `wcp/*` images instead of the published GHCR
 ones — build them first with `node build.mjs`). WCP_INGRESS_D/WCP_RUNTIME_D/
 WCP_WWW_ROOT/WCP_CADDY_LOG must point at local sandbox directories (these
