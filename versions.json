@@ -23,10 +23,10 @@
           "phpVersion": "8.3",
           "tag": "1-php8.3",
           "supportStatus": "supported",
-          "digest": "sha256:33a577fe9547132caa9550eb013a18e16fd63bb31e75547cc37bf53c8ec4a746",
+          "digest": "sha256:2eabc9973a75d868e5a03deac9a1a635eb0fe8968ed8c682256aeb345b071f78",
           "platformDigests": {
-            "linux/amd64": "sha256:c7626d9a1c882cb4895ad33e23a25c3a75281c3b721040aed7c7d80ba94e43c5",
-            "linux/arm64": "sha256:a0b860a55c5098879e93872f63590439b4e144fe729f726c2255f497e6b9f670"
+            "linux/amd64": "sha256:e2bcc238749bef7a6cc3e7f25a828036f8375a6edba2e4170a2c1aa0d5a5610c",
+            "linux/arm64": "sha256:42bb6d80d0109eee2a48f2734431d9b638da4865d71ac6bb0d2f6fa8d95806b3"
           }
         },
         {
@@ -35,10 +35,10 @@
           "phpVersion": "8.4",
           "tag": "1-php8.4",
           "supportStatus": "supported",
-          "digest": "sha256:62d288ba3092090f23ea4abf7b963112f9db33cbfd3200c88f02b00de6028b19",
+          "digest": "sha256:8a342927e0ced2a9eae5c5f11ddcf969403dbcc9728d03378bc1e01be31e5a78",
           "platformDigests": {
-            "linux/amd64": "sha256:81964737eafc7cfac392bc94ca07bf82011f43ff899109e36c31b4a1f409b8f0",
-            "linux/arm64": "sha256:6091f1608642fb19ac987ead5b387329852d29d79ff477b1dac8db2040a73b68"
+            "linux/amd64": "sha256:4529788c21db1684823525e160168229aeef031b17e997f56acfb0b304e24c35",
+            "linux/arm64": "sha256:43c1e977d0f8d8f7452425e8a912b63f8861d6d01859cb1820f0880e814352e3"
           }
         },
         {
@@ -47,10 +47,10 @@
           "phpVersion": "8.5",
           "tag": "1-php8.5",
           "supportStatus": "supported",
-          "digest": "sha256:f2a63320798264a25921b9b5340338112bba484da8a5f39cad7d99d3173917f0",
+          "digest": "sha256:bfda5b8d1efd396c030b0ac7d51496f2b37d997028f329c32280c19a95c623fe",
           "platformDigests": {
-            "linux/amd64": "sha256:8423423726c6c00e2be8782894d492787e502a2598e9dbc08d0e604c3a68abbf",
-            "linux/arm64": "sha256:a860084df17b2ed2510054dbe402e57dc4e1e22059dbbffdc5f7272bccfba1bc"
+            "linux/amd64": "sha256:123660538872157ad69302a50f8dd800da99b86ba64c40cc168e50d280a28f89",
+            "linux/arm64": "sha256:08dccb05996162a75606ed325d69459d4329e6e4f7306b9499984d1a2086144a"
           }
         }
       ],
