@@ -49,6 +49,12 @@ commandTests:
     expectedOutput: ["ok"]
     exitCode: 0
 
+  - name: "mysqli extension loaded"
+    command: "php"
+    args: ["-r", "echo extension_loaded('mysqli') ? 'ok' : 'missing';"]
+    expectedOutput: ["ok"]
+    exitCode: 0
+
   - name: "pdo_mysql extension loaded"
     command: "php"
     args: ["-r", "echo extension_loaded('pdo_mysql') ? 'ok' : 'missing';"]
