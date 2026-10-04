@@ -1,4 +1,7 @@
-ARG FRANKENPHP_VERSION=1
+# The exact FrankenPHP release to build on. CI passes versions.json's
+# images.frankenphp.baseVersion; the published tags keep the major line
+# (`1-php8.3`) so runtime pool ids do not change with a minor release.
+ARG FRANKENPHP_VERSION=1.13.0
 ARG PHP_VERSION=8.3
 FROM dunglas/frankenphp:${FRANKENPHP_VERSION}-php${PHP_VERSION}
 
@@ -43,10 +46,16 @@ RUN apt-get update \
 # install-php-extensions (bundled in FrankenPHP) auto-handles every apt
 # dependency, so no manual -dev package dance is needed.
 #
+#   apcu       → in-process user cache. Each site runs in its own FrankenPHP
+#                process, so the cache is per site and never shared between
+#                tenants; FrankenPHP's threads share it inside that process.
 #   bcmath     → arbitrary-precision math (many WP plugins / WooCommerce)
 #   excimer    → low-overhead sampling profiler (required by Query Monitor etc.)
 #   exif       → reads EXIF metadata from uploaded images
 #   gd         → built-in WordPress image editor fallback
+#   igbinary   → compact binary serializer (WordPress Site Health optional
+#                module); listed before redis so phpredis is built with its
+#                igbinary serializer for object-cache plugins
 #   imagick    → preferred WordPress image editor (ImageMagick binding)
 #   intl       → Unicode / locale support (Polylang, WPML, etc.)
 #   mysqli     → MySQL / MariaDB driver WordPress core requires (wpdb uses
@@ -65,10 +74,12 @@ RUN apt-get update \
 #
 # relay    # high-perf Redis client — commercial license required for production; see cachewerk.com
 RUN install-php-extensions \
+    apcu \
     bcmath \
     excimer \
     exif \
     gd \
+    igbinary \
     imagick \
     intl \
     mysqli \

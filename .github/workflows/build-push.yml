@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       frankenphp: ${{ steps.v.outputs.frankenphp }}
+      frankenphp_base: ${{ steps.v.outputs.frankenphp_base }}
       frankenphp_php_versions: ${{ steps.v.outputs.frankenphp_php_versions }}
       frankenphp_php_default: ${{ steps.v.outputs.frankenphp_php_default }}
       mariadb_runtimes: ${{ steps.v.outputs.mariadb_runtimes }}
@@ -43,6 +44,7 @@ jobs:
         id: v
         run: |
           echo "frankenphp=$(jq -r '.images.frankenphp.version' versions.json)" >> $GITHUB_OUTPUT
+          echo "frankenphp_base=$(jq -r '.images.frankenphp.baseVersion // .images.frankenphp.version' versions.json)" >> $GITHUB_OUTPUT
           echo "frankenphp_php_versions=$(jq -c '.images.frankenphp.phpVersions' versions.json)" >> $GITHUB_OUTPUT
           # No static `phpDefault` field - the recommended PHP version is
           # computed as the middle of the "supported" runtimes by version,
@@ -150,7 +152,7 @@ jobs:
           context: ./frankenphp
           platforms: ${{ matrix.platform }}
           build-args: |
-            FRANKENPHP_VERSION=${{ needs.versions.outputs.frankenphp }}
+            FRANKENPHP_VERSION=${{ needs.versions.outputs.frankenphp_base }}
             PHP_VERSION=${{ matrix.php }}
           outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/frankenphp,push-by-digest=true,name-canonical=true,push=true
           # gha cache is fast but evicted after 7 days / 10GB; the registry
