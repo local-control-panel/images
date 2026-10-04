@@ -49,6 +49,8 @@ RUN apt-get update \
 #   gd         → built-in WordPress image editor fallback
 #   imagick    → preferred WordPress image editor (ImageMagick binding)
 #   intl       → Unicode / locale support (Polylang, WPML, etc.)
+#   mysqli     → MySQL / MariaDB driver WordPress core requires (wpdb uses
+#                mysqli only; without it WordPress refuses to start)
 #   pcntl      → process control (used by WP-CLI, queue workers)
 #   pdo_mysql  → PDO driver for MySQL / MariaDB
 #   pdo_pgsql  → PDO driver for PostgreSQL
@@ -69,6 +71,7 @@ RUN install-php-extensions \
     gd \
     imagick \
     intl \
+    mysqli \
     pcntl \
     pdo_mysql \
     pdo_pgsql \
