@@ -19,7 +19,7 @@ services:
     # explicitly uses the catalog's PHP 8.3 carrier image (PHP is inert in
     # this role). The tag remains for readability, while the OCI index digest
     # makes the actual multi-arch image immutable.
-    image: ${WCP_INGRESS_IMAGE:-ghcr.io/local-control-panel/frankenphp:1-php8.3@sha256:2eabc9973a75d868e5a03deac9a1a635eb0fe8968ed8c682256aeb345b071f78}
+    image: ${WCP_INGRESS_IMAGE:-ghcr.io/local-control-panel/frankenphp:1-php8.3@sha256:73831ef9b5ee4df1bc76f38fffc59bd707de6d7d85cddb5bccb56efefb4680a3}
     restart: unless-stopped
     ports:
       - "80:80"
@@ -67,7 +67,7 @@ services:
     # without the id silently lying about what's actually running (RP-03).
     # Mirrors runtime-fp1-php84/85 below, which already hardcode their own
     # PHP component the same way.
-    image: ${WCP_FRANKENPHP_IMAGE:-ghcr.io/local-control-panel/frankenphp:1-php8.3@sha256:2eabc9973a75d868e5a03deac9a1a635eb0fe8968ed8c682256aeb345b071f78}
+    image: ${WCP_FRANKENPHP_IMAGE:-ghcr.io/local-control-panel/frankenphp:1-php8.3@sha256:73831ef9b5ee4df1bc76f38fffc59bd707de6d7d85cddb5bccb56efefb4680a3}
     restart: unless-stopped
     volumes:
       - ../frankenphp/Caddyfile.runtime:/etc/caddy/Caddyfile:ro
@@ -109,7 +109,7 @@ services:
   # (8.3). Ingress reverse-proxies to these by domain. Started on demand via
   # --profile php-8.X - not running by default (mirrors docker-compose.yml).
   runtime-fp1-php84:
-    image: ${WCP_FRANKENPHP_84_IMAGE:-ghcr.io/local-control-panel/frankenphp:1-php8.4@sha256:8a342927e0ced2a9eae5c5f11ddcf969403dbcc9728d03378bc1e01be31e5a78}
+    image: ${WCP_FRANKENPHP_84_IMAGE:-ghcr.io/local-control-panel/frankenphp:1-php8.4@sha256:af3e5d4988210041c9a15dc233cd4d2f2f497a6311fb49de03e19a2a52aea32d}
     restart: unless-stopped
     profiles: ["php-8.4"]
     volumes:
@@ -144,7 +144,7 @@ services:
       start_period: 15s
 
   runtime-fp1-php85:
-    image: ${WCP_FRANKENPHP_85_IMAGE:-ghcr.io/local-control-panel/frankenphp:1-php8.5@sha256:bfda5b8d1efd396c030b0ac7d51496f2b37d997028f329c32280c19a95c623fe}
+    image: ${WCP_FRANKENPHP_85_IMAGE:-ghcr.io/local-control-panel/frankenphp:1-php8.5@sha256:eba2fd4d4d3535d59e148bcf60479d196c49916be01e305017295462b25f5d09}
     restart: unless-stopped
     profiles: ["php-8.5"]
     volumes:
