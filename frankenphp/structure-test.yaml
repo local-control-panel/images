@@ -49,6 +49,30 @@ commandTests:
     expectedOutput: ["ok"]
     exitCode: 0
 
+  - name: "apcu extension loaded"
+    command: "php"
+    args: ["-r", "echo extension_loaded('apcu') ? 'ok' : 'missing';"]
+    expectedOutput: ["ok"]
+    exitCode: 0
+
+  - name: "igbinary extension loaded"
+    command: "php"
+    args: ["-r", "echo extension_loaded('igbinary') ? 'ok' : 'missing';"]
+    expectedOutput: ["ok"]
+    exitCode: 0
+
+  - name: "phpredis built with the igbinary serializer"
+    command: "php"
+    args: ["-r", "echo defined('Redis::SERIALIZER_IGBINARY') ? 'ok' : 'missing';"]
+    expectedOutput: ["ok"]
+    exitCode: 0
+
+  - name: "FrankenPHP 1.13 or newer"
+    command: "frankenphp"
+    args: ["version"]
+    expectedOutput: ["FrankenPHP v1\\.(1[3-9]|[2-9][0-9])\\."]
+    exitCode: 0
+
   - name: "mysqli extension loaded"
     command: "php"
     args: ["-r", "echo extension_loaded('mysqli') ? 'ok' : 'missing';"]

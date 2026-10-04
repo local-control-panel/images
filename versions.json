@@ -11,6 +11,7 @@
       "image": "dunglas/frankenphp",
       "publishedImage": "ghcr.io/local-control-panel/frankenphp",
       "version": "1",
+      "baseVersion": "1.13.0",
       "phpVersions": [
         "8.3",
         "8.4",

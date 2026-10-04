@@ -260,8 +260,17 @@ for (const [key, cfg] of Object.entries(versions.images)) {
     let extraChanges = {};
 
     if (key === "frankenphp") {
-      const result = await latestFrankenPhpVersion(cfg.version);
-      newVersion = result.version;
+      // `version` is the published major line (`1-php8.3`, runtime ids
+      // `fp1-*`) and never changes here; the exact release the image builds
+      // on is `baseVersion`.
+      const result = await latestFrankenPhpVersion(cfg.baseVersion ?? cfg.version);
+      newVersion = cfg.version;
+      if (
+        result.version.split(".")[0] === cfg.version &&
+        result.version !== (cfg.baseVersion ?? cfg.version)
+      ) {
+        extraChanges.baseVersion = result.version;
+      }
       const sortedNew = result.phpVersions.join(",");
       const sortedOld = (cfg.phpVersions ?? []).join(",");
       if (sortedNew !== sortedOld && result.phpVersions.length > 0) {
