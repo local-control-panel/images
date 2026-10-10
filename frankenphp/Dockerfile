@@ -96,19 +96,20 @@ RUN install-php-extensions \
     && apt-get purge -y --auto-remove linux-libc-dev 2>/dev/null || true
 
 # ── WP-CLI ──────────────────────────────────────────────────────────────────
-# php --info verifies the phar is valid before it is moved into place.
-# A wrapper script adds --allow-root automatically so WP-CLI works when the
-# container runs as root (FrankenPHP default).
+# php --info verifies the phar is valid before it is moved into place. The
+# `wp` wrapper adds --allow-root (FrankenPHP runs as root) and prefers the
+# WP-CLI managed by the Operations Engine and mounted at /opt/wcp-tools; the
+# phar baked in here is the fallback until a host has installed its own.
 RUN curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
         -o /tmp/wp-cli.phar \
     && php /tmp/wp-cli.phar --info \
     && mv /tmp/wp-cli.phar /usr/local/bin/wp.phar \
-    && printf '#!/bin/sh\nexec /usr/local/bin/wp.phar --allow-root "$@"\n' > /usr/local/bin/wp \
-    && chmod +x /usr/local/bin/wp.phar /usr/local/bin/wp \
-    # Composer falls back to `git@github.com:` for VCS clones, which hangs/fails
-    # without a registered SSH key (no SSH auth for anonymous GitHub reads,
-    # even on public repos). Rewrite it to the anonymous HTTPS remote instead.
-    && git config --global url."https://github.com/".insteadOf git@github.com: \
+    && chmod +x /usr/local/bin/wp.phar
+COPY --chmod=755 wcp-wp /usr/local/bin/wp
+# Composer falls back to `git@github.com:` for VCS clones, which hangs/fails
+# without a registered SSH key (no SSH auth for anonymous GitHub reads,
+# even on public repos). Rewrite it to the anonymous HTTPS remote instead.
+RUN git config --global url."https://github.com/".insteadOf git@github.com: \
     && for i in 1 2 3; do wp package install wp-cli/doctor-command:2.3.1 --allow-root && break || sleep 5; [ "$i" = 3 ] && exit 1; done
 
 # Bake in default configs — can still be overridden with volume mounts at runtime
