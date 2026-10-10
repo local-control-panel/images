@@ -1,0 +1,10 @@
+#!/bin/sh
+# `wp` inside runtime containers. Prefer the WP-CLI the Operations Engine manages
+# on the host (mounted read-only at /opt/wcp-tools, see `tool.install`) so it
+# survives image updates, and fall back to the copy baked into this image.
+# --allow-root is added because the container runs PHP workloads as root.
+managed=/opt/wcp-tools/wp-cli/current/wp.phar
+if [ -f "$managed" ]; then
+    exec php "$managed" --allow-root "$@"
+fi
+exec /usr/local/bin/wp.phar --allow-root "$@"
