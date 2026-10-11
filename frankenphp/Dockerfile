@@ -16,9 +16,10 @@ FROM dunglas/frankenphp:${FRANKENPHP_VERSION}-php${PHP_VERSION}
 #   webp        → cwebp / dwebp / img2webp (WebP encode+decode)
 #
 # General WordPress tools:
-#   default-mysql-client → mysql / mysqldump (works against MariaDB too)
-#   git                  → Composer VCS packages + WP-CLI internals
-#   less                 → WP-CLI interactive paging
+#   default-mysql-client → mysql / mysqldump (works against MariaDB too);
+#                          managed WP-CLI's `wp db ...` shells out to these
+#   git                  → Composer VCS packages (managed Composer, see Tools)
+#   less                 → pager for managed WP-CLI's `wp help` on a TTY
 #   msmtp / msmtp-mta    → sendmail drop-in; config generated at runtime
 #                          by /docker-entrypoint.d/10-msmtp.sh
 #   unzip                → WordPress plugin / theme installation
@@ -95,22 +96,23 @@ RUN install-php-extensions \
     # CVE against its version string — purge it to cut that noise.
     && apt-get purge -y --auto-remove linux-libc-dev 2>/dev/null || true
 
-# ── WP-CLI ──────────────────────────────────────────────────────────────────
-# php --info verifies the phar is valid before it is moved into place. The
-# `wp` wrapper adds --allow-root (FrankenPHP runs as root) and prefers the
-# WP-CLI managed by the Operations Engine and mounted at /opt/wcp-tools; the
-# phar baked in here is the fallback until a host has installed its own.
-RUN curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
-        -o /tmp/wp-cli.phar \
-    && php /tmp/wp-cli.phar --info \
-    && mv /tmp/wp-cli.phar /usr/local/bin/wp.phar \
-    && chmod +x /usr/local/bin/wp.phar
+# ── Tools ───────────────────────────────────────────────────────────────────
+# WP-CLI and Composer are deliberately NOT baked into this image. The Operations
+# Engine installs pinned, checksum-verified releases on the host
+# (`ops-engine tool install --tool wp-cli|composer`, /var/lib/wcp/tools) and
+# the stack mounts that directory read-only at /opt/wcp-tools, so a tool update
+# never needs an image rebuild or a container restart.
+#
+# `wp` is a thin wrapper around the managed phar: it adds --allow-root (PHP
+# workloads run as root unless `docker exec --user` says otherwise) and fails
+# with a clear "install the tool" message and exit status 127 when the tool is
+# missing. See wcp-wp for the details.
 COPY --chmod=755 wcp-wp /usr/local/bin/wp
-# Composer falls back to `git@github.com:` for VCS clones, which hangs/fails
-# without a registered SSH key (no SSH auth for anonymous GitHub reads,
-# even on public repos). Rewrite it to the anonymous HTTPS remote instead.
-RUN git config --global url."https://github.com/".insteadOf git@github.com: \
-    && for i in 1 2 3; do wp package install wp-cli/doctor-command:2.3.1 --allow-root && break || sleep 5; [ "$i" = 3 ] && exit 1; done
+# Composer (managed or the dev image's) falls back to `git@github.com:` for VCS
+# clones, which hangs/fails without a registered SSH key (no SSH auth for
+# anonymous GitHub reads, even on public repos). Rewrite it to the anonymous
+# HTTPS remote instead.
+RUN git config --global url."https://github.com/".insteadOf git@github.com:
 
 # Bake in default configs — can still be overridden with volume mounts at runtime
 COPY Caddyfile /etc/caddy/Caddyfile

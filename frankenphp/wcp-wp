@@ -1,10 +1,15 @@
 #!/bin/sh
-# `wp` inside runtime containers. Prefer the WP-CLI the Operations Engine manages
-# on the host (mounted read-only at /opt/wcp-tools, see `tool.install`) so it
-# survives image updates, and fall back to the copy baked into this image.
+# `wp` inside runtime containers. WP-CLI is not part of this image: the
+# Operations Engine installs it on the host (`ops-engine tool install --tool
+# wp-cli`, or "Server tools" in the control panel) and the stack mounts that
+# directory read-only at /opt/wcp-tools. Updating WP-CLI therefore needs no
+# image rebuild and no container restart.
 # --allow-root is added because the container runs PHP workloads as root.
 managed=/opt/wcp-tools/wp-cli/current/wp.phar
 if [ -f "$managed" ]; then
     exec php "$managed" --allow-root "$@"
 fi
-exec /usr/local/bin/wp.phar --allow-root "$@"
+# Diagnostics go to stderr only, so callers that probe `wp --version` with
+# 2>/dev/null (the panel's capability detection) just see "not available".
+echo "wp: WP-CLI is not installed on this server (or /opt/wcp-tools is not mounted into this container). Install it with \`ops-engine tool install --tool wp-cli\` or from Server tools in the control panel." >&2
+exit 127

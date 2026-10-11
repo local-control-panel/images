@@ -15,15 +15,13 @@ commandTests:
     args: ["validate", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
     exitCode: 0
 
-  - name: "wp-cli is callable"
+  # WP-CLI is not baked in (engine-managed, mounted at /opt/wcp-tools). Without
+  # the mount the wrapper must fail clearly instead of "command not found".
+  - name: "wp without the managed tool fails with an install hint"
     command: "wp"
     args: ["--version"]
-    exitCode: 0
-
-  - name: "wp-cli runs without --allow-root error"
-    command: "wp"
-    args: ["--info", "--allow-root"]
-    exitCode: 0
+    expectedError: ["WP-CLI is not installed on this server"]
+    exitCode: 127
 
   - name: "redis extension loaded"
     command: "php"
@@ -129,13 +127,18 @@ fileExistenceTests:
     shouldExist: true
     permissions: "-rwxr-xr-x"
 
-  - name: "wp binary is a wrapper script (not a phar)"
+  - name: "wp binary is the managed-tool wrapper"
     path: "/usr/local/bin/wp"
     shouldExist: true
+    permissions: "-rwxr-xr-x"
 
-  - name: "wp.phar present"
+  - name: "wp.phar is not baked into the image"
     path: "/usr/local/bin/wp.phar"
-    shouldExist: true
+    shouldExist: false
+
+  - name: "composer is not baked into the image"
+    path: "/usr/local/bin/composer"
+    shouldExist: false
 
 fileContentTests:
   - name: "expose_php is Off"
@@ -149,3 +152,7 @@ fileContentTests:
   - name: "wp wrapper calls --allow-root"
     path: "/usr/local/bin/wp"
     expectedContents: ["--allow-root"]
+
+  - name: "wp wrapper runs the managed phar"
+    path: "/usr/local/bin/wp"
+    expectedContents: ["/opt/wcp-tools/wp-cli/current/wp\\.phar"]

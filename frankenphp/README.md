@@ -2,8 +2,29 @@
 
 The platform image is built from this directory and published to GHCR (GitHub
 Container Registry) by `.github/workflows/build-push.yml`. Production Compose
-uses that image so the configured PHP extensions, WP-CLI and entrypoint helpers
-are actually present at runtime.
+uses that image so the configured PHP extensions and entrypoint helpers are
+actually present at runtime.
+
+## Tools (WP-CLI, Composer)
+
+The image ships no WP-CLI and no Composer. The Operations Engine installs
+pinned, checksum-verified releases on the host
+(`ops-engine tool install --tool wp-cli` or `--tool composer`, or "Server
+tools" in the control panel) under `/var/lib/wcp/tools`, and the Compose files
+mount that directory read-only at `/opt/wcp-tools`. A tool update therefore
+needs neither an image rebuild nor a container restart, and it survives image
+updates.
+
+`wp` inside a container is a small wrapper (`wcp-wp`) that runs the managed
+phar with `--allow-root`. When the tool is not installed (or the mount is
+missing) it prints an install hint to stderr and exits with status 127.
+Composer is run as `php /opt/wcp-tools/composer/current/composer.phar`.
+`git`, `unzip` and the MariaDB client stay in the image because both tools
+shell out to them. The development image (`Dockerfile.dev`) still carries its
+own Composer.
+
+The `wp doctor` package that used to be installed in the image for root shells
+is gone; it was never used by the control panel or the engine.
 
 ## Add an application
 
