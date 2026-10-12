@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # WP-CLI shortcut — runs wp inside a running runtime container.
+# WP-CLI is engine-managed, not part of the image: install it first with
+#   ops-engine tool install --tool wp-cli
+# (the runtime pools mount /var/lib/wcp/tools read-only at /opt/wcp-tools).
 #
 # Usage:
 #   ./stack/wp.sh core version
