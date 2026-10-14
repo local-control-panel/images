@@ -45,7 +45,7 @@ fi
 
 # 3. Required .env variables
 if [ -f "$ROOT/.env" ]; then
-    for var in MARIADB_ROOT_PASSWORD MARIADB_PASSWORD; do
+    for var in MARIADB_ROOT_PASSWORD MARIADB_PASSWORD VALKEY_ADMIN_PASSWORD; do
         if grep -q "^${var}=" "$ROOT/.env" 2>/dev/null; then
             ok "$var is set"
         else
