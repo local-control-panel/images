@@ -1,6 +1,6 @@
 services:
   valkey:
-    image: ghcr.io/local-control-panel/valkey:${VALKEY_VERSION:-8}
+    image: ghcr.io/local-control-panel/valkey:${VALKEY_VERSION:-9}
     container_name: valkey
     restart: unless-stopped
     env_file:

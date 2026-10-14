@@ -107,11 +107,11 @@
     "valkey": {
       "image": "valkey/valkey",
       "publishedImage": "ghcr.io/local-control-panel/valkey",
-      "version": "8",
-      "digest": "sha256:d2e18f3410b6f616de1417f570fa55261af2898b9c5b2cfb6781ce2373ea43d1",
+      "version": "9",
+      "digest": "sha256:48332870af354a799964c0012ae1194a0bf2bf894eb508f945810596dc2d8d11",
       "platformDigests": {
-        "linux/amd64": "sha256:e55eb7bfbce02957d1a91fb1e26d69aa36eb18f77bf9f86ff6eff81f864b13b7",
-        "linux/arm64": "sha256:3e0751bb90e44d5d3a2b321bb36d219d7bb86a275ad908feb06567e0f6db77c0"
+        "linux/amd64": "sha256:3b83b0b6a598bb390c8186a408a69949772f439548a81c5ea0ab7ccf102c248d",
+        "linux/arm64": "sha256:eb5a657e070199befde516f47a1015338b752f083e09c7736cb8c07d9ec99bdd"
       },
       "tagPattern": "{version}-alpine",
       "platforms": [
@@ -119,7 +119,7 @@
         "linux/arm64"
       ],
       "registryUrl": "https://hub.docker.com/v2/repositories/valkey/valkey/tags",
-      "notes": "Redis-compatible. Alpine variant. Supports amd64 and arm64."
+      "notes": "Redis-compatible. Alpine variant. Supports amd64 and arm64. 9.x is required for per-database ACL (one database per site)."
     },
     "meilisearch": {
       "image": "getmeili/meilisearch",

@@ -37,5 +37,5 @@ services:
   mariadb-11:
     image: ${WCP_MARIADB_IMAGE:-wcp/mariadb:11.4}
 
-  valkey-8:
-    image: ${WCP_VALKEY_IMAGE:-wcp/valkey:8}
+  valkey-9:
+    image: ${WCP_VALKEY_IMAGE:-wcp/valkey:9}

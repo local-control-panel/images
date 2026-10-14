@@ -61,14 +61,15 @@ In the full stack, PHP runtime containers can connect to Valkey through
 mounted read-only in each runtime. Its mode is `777` because each site process
 runs under a dedicated UID/GID without supplementary groups; only containers
 with the socket volume mounted can reach it.
-Access is controlled by ACL: the `default` user is off and the only built-in
-user is `wcp_admin`, whose password is `VALKEY_ADMIN_PASSWORD` (set in `.env`;
-the stack deploy generates it). Each site gets its own user `site_<domain>`
-from the operations engine (`valkey.provisionSite`): it can only touch keys
-that start with `wcp:<domain>:` and cannot run `FLUSHALL`, `FLUSHDB`, `KEYS`,
-`SCAN`, `CONFIG` or other administrative commands. Users are kept in
+Access is controlled by ACL (Valkey 9): the `default` user is off and the only
+built-in user is `wcp_admin`, whose password is `VALKEY_ADMIN_PASSWORD` (set in
+`.env`; the stack deploy generates it). Each site gets its own user
+`site_<domain>` from the operations engine (`valkey.provisionSite`) and its own
+numbered database (the panel's DB slot, 1-255): the user can read and write only
+that database, may `FLUSHDB` and `SCAN` it, and cannot `SELECT` another one, run
+`FLUSHALL`, `KEYS`, `CONFIG` or other administrative commands. Users are kept in
 `/data/users.acl` (hashed passwords). Point the application's client at the
-socket path with the site's user, password and the `wcp:<domain>:` key prefix.
+socket path with the site's user, password and database number.
 The control panel talks to Valkey with
 `docker exec <valkey> sh /etc/valkey/wcp-valkey-cli.sh <command>`, which reads
 the administrator password from the container's own environment.
@@ -95,7 +96,7 @@ Images are automatically built and pushed to GitHub Container Registry on every 
 ```bash
 docker pull ghcr.io/local-control-panel/frankenphp:1-php8.3
 docker pull ghcr.io/local-control-panel/mariadb:11.4
-docker pull ghcr.io/local-control-panel/valkey:8
+docker pull ghcr.io/local-control-panel/valkey:9
 docker pull ghcr.io/local-control-panel/meilisearch:1.53.2
 ```
 
