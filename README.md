@@ -61,9 +61,17 @@ In the full stack, PHP runtime containers can connect to Valkey through
 mounted read-only in each runtime. Its mode is `777` because each site process
 runs under a dedicated UID/GID without supplementary groups; only containers
 with the socket volume mounted can reach it.
-Applications and CMSs choose their own Redis-compatible client and point it
-at that socket path. Use a distinct database or key prefix for each application
-to avoid key collisions; neither provides a security boundary between sites.
+Access is controlled by ACL: the `default` user is off and the only built-in
+user is `wcp_admin`, whose password is `VALKEY_ADMIN_PASSWORD` (set in `.env`;
+the stack deploy generates it). Each site gets its own user `site_<domain>`
+from the operations engine (`valkey.provisionSite`): it can only touch keys
+that start with `wcp:<domain>:` and cannot run `FLUSHALL`, `FLUSHDB`, `KEYS`,
+`SCAN`, `CONFIG` or other administrative commands. Users are kept in
+`/data/users.acl` (hashed passwords). Point the application's client at the
+socket path with the site's user, password and the `wcp:<domain>:` key prefix.
+The control panel talks to Valkey with
+`docker exec <valkey> sh /etc/valkey/wcp-valkey-cli.sh <command>`, which reads
+the administrator password from the container's own environment.
 
 Valkey also listens on port `6379` on the private `backend` network. This keeps
 network clients and control-panel commands working. The standalone Valkey

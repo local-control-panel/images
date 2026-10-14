@@ -6,9 +6,15 @@ services:
     env_file:
       - path: ../.env
         required: false
-    command: valkey-server /etc/valkey/valkey.conf
+    # The start script writes the ACL file from VALKEY_ADMIN_PASSWORD, then
+    # hands over to the image's entrypoint (which drops root).
+    command: ["sh", "/etc/valkey/wcp-valkey-start.sh"]
+    environment:
+      VALKEY_ADMIN_PASSWORD: ${VALKEY_ADMIN_PASSWORD:?required}
     volumes:
       - ./valkey.conf:/etc/valkey/valkey.conf:ro
+      - ./wcp-valkey-start.sh:/etc/valkey/wcp-valkey-start.sh:ro
+      - ./wcp-valkey-cli.sh:/etc/valkey/wcp-valkey-cli.sh:ro
       - valkey_data:/data
     networks:
       - backend
@@ -19,7 +25,7 @@ services:
         reservations:
           memory: 64M
     healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
+      test: ["CMD", "sh", "/etc/valkey/wcp-valkey-cli.sh", "ping"]
       interval: 10s
       timeout: 3s
       retries: 3

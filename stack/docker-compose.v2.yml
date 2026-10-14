@@ -226,9 +226,15 @@ services:
   valkey-8:
     image: ${WCP_VALKEY_IMAGE:-ghcr.io/local-control-panel/valkey:8@sha256:d2e18f3410b6f616de1417f570fa55261af2898b9c5b2cfb6781ce2373ea43d1}
     restart: unless-stopped
-    command: valkey-server /etc/valkey/valkey.conf
+    # The start script writes the ACL file from VALKEY_ADMIN_PASSWORD, then
+    # hands over to the image's entrypoint (which drops root).
+    command: ["sh", "/etc/valkey/wcp-valkey-start.sh"]
+    environment:
+      VALKEY_ADMIN_PASSWORD: ${VALKEY_ADMIN_PASSWORD:?required}
     volumes:
       - ../valkey/valkey.conf:/etc/valkey/valkey.conf:ro
+      - ../valkey/wcp-valkey-start.sh:/etc/valkey/wcp-valkey-start.sh:ro
+      - ../valkey/wcp-valkey-cli.sh:/etc/valkey/wcp-valkey-cli.sh:ro
       - valkey_data:/data
       - valkey_socket:/run/valkey
     networks:
@@ -251,7 +257,7 @@ services:
         max-size: "10m"
         max-file: "3"
     healthcheck:
-      test: ["CMD", "valkey-cli", "-s", "/run/valkey/valkey.sock", "ping"]
+      test: ["CMD", "sh", "/etc/valkey/wcp-valkey-cli.sh", "-s", "/run/valkey/valkey.sock", "ping"]
       interval: 10s
       timeout: 3s
       retries: 3
