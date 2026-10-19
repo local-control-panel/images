@@ -31,11 +31,37 @@ services:
       - ../frankenphp/Caddyfile.runtime:/etc/caddy/Caddyfile:ro
       - ../frankenphp/php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
       - ${WCP_RUNTIME_D}:/etc/wcp/runtime.d:ro
+      - ${WCP_SITE_SERVICES_D:-${WCP_RUNTIME_D}/site-services}/fp1-php83:/etc/wcp/site-services
+      - ${WCP_TOOLS_D:-${WCP_RUNTIME_D}/tools}:/opt/wcp-tools:ro
+      - ${WCP_WWW_ROOT}:/var/www
+      - ${WCP_CADDY_LOG}:/var/log/caddy
+
+  runtime-fp1-php84:
+    image: ${WCP_FRANKENPHP_84_IMAGE:-wcp/frankenphp:1-php8.4}
+    volumes:
+      - ${WCP_RUNTIME_84_D:-${WCP_RUNTIME_D}/php84}:/etc/wcp/runtime.d:ro
+      - ${WCP_SITE_SERVICES_D:-${WCP_RUNTIME_D}/site-services}/fp1-php84:/etc/wcp/site-services
+      - ${WCP_TOOLS_D:-${WCP_RUNTIME_D}/tools}:/opt/wcp-tools:ro
+      - ${WCP_WWW_ROOT}:/var/www
+      - ${WCP_CADDY_LOG}:/var/log/caddy
+
+  runtime-fp1-php85:
+    image: ${WCP_FRANKENPHP_85_IMAGE:-wcp/frankenphp:1-php8.5}
+    volumes:
+      - ${WCP_RUNTIME_85_D:-${WCP_RUNTIME_D}/php85}:/etc/wcp/runtime.d:ro
+      - ${WCP_SITE_SERVICES_D:-${WCP_RUNTIME_D}/site-services}/fp1-php85:/etc/wcp/site-services
+      - ${WCP_TOOLS_D:-${WCP_RUNTIME_D}/tools}:/opt/wcp-tools:ro
       - ${WCP_WWW_ROOT}:/var/www
       - ${WCP_CADDY_LOG}:/var/log/caddy
 
   mariadb-11:
-    image: ${WCP_MARIADB_IMAGE:-wcp/mariadb:11.4}
+    image: ${WCP_MARIADB_IMAGE:-mariadb:11.4@sha256:80494b9810694179889f7281ec44ca928241df577159c0356a1070e2e94616a1}
 
   valkey-9:
-    image: ${WCP_VALKEY_IMAGE:-wcp/valkey:9}
+    image: ${WCP_VALKEY_IMAGE:-valkey/valkey:9-alpine@sha256:48332870af354a799964c0012ae1194a0bf2bf894eb508f945810596dc2d8d11}
+
+  postgres-18:
+    image: ${WCP_POSTGRES_IMAGE:-postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873}
+
+  meili-1:
+    image: ${WCP_MEILISEARCH_IMAGE:-getmeili/meilisearch:v1.53.2@sha256:c94e58ca09662dd6e65e8f1b0fd145767be3da7d5422a863a27b8d2b68e090c9}

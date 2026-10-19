@@ -29,6 +29,7 @@ jobs:
       mariadb_default: ${{ steps.v.outputs.mariadb_default }}
       valkey: ${{ steps.v.outputs.valkey }}
       postgres: ${{ steps.v.outputs.postgres }}
+      postgres_digest: ${{ steps.v.outputs.postgres_digest }}
       meilisearch: ${{ steps.v.outputs.meilisearch }}
       frankenphp_changed: ${{ steps.changes.outputs.frankenphp }}
       mariadb_changed: ${{ steps.changes.outputs.mariadb }}
@@ -68,6 +69,7 @@ jobs:
           echo "mariadb_default=$(jq -r '[.images.mariadb.runtimes[] | select(.supportStatus == "supported")] | .[0].id' versions.json)" >> $GITHUB_OUTPUT
           echo "valkey=$(jq -r '.images.valkey.version' versions.json)" >> $GITHUB_OUTPUT
           echo "postgres=$(jq -r '.images.postgres.version' versions.json)" >> $GITHUB_OUTPUT
+          echo "postgres_digest=$(jq -r '.images.postgres.digest' versions.json)" >> $GITHUB_OUTPUT
           echo "meilisearch=$(jq -r '.images.meilisearch.version' versions.json)" >> $GITHUB_OUTPUT
 
       # Per-image change detection: an image is "changed" if its build
@@ -345,7 +347,7 @@ jobs:
           docker buildx imagetools create \
             --tag ghcr.io/${{ github.repository_owner }}/postgres:${{ needs.versions.outputs.postgres }} \
             --tag ghcr.io/${{ github.repository_owner }}/postgres:latest \
-            postgres:${{ needs.versions.outputs.postgres }}-alpine
+            postgres:${{ needs.versions.outputs.postgres }}-alpine@${{ needs.versions.outputs.postgres_digest }}
 
       - uses: aquasecurity/trivy-action@v0.36.0
         with:

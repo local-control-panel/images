@@ -90,11 +90,11 @@
     "postgres": {
       "image": "postgres",
       "publishedImage": "ghcr.io/local-control-panel/postgres",
-      "version": "17",
-      "digest": "sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73",
+      "version": "18",
+      "digest": "sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
       "platformDigests": {
-        "linux/amd64": "sha256:7456ef82e5f5bc43d997f4781bbd7c0d6389bff397564649a356e206ba473aee",
-        "linux/arm64": "sha256:dfc2780980fe6ca2d158bfe4342660db5e4c6431fb969088e543430d09f8d0f2"
+        "linux/amd64": "sha256:d8703cd7fba306b9fec9268ecedfa8a966846c053036a60e3635791957eb2f66",
+        "linux/arm64": "sha256:89f747171c4b0af0eacf5984550060be79786dbe286eb60cfa691d79d1e8b23f"
       },
       "tagPattern": "{version}-alpine",
       "platforms": [
@@ -102,7 +102,7 @@
         "linux/arm64"
       ],
       "registryUrl": "https://hub.docker.com/v2/repositories/library/postgres/tags",
-      "notes": "Re-tagged upstream image; postgresql.conf tuning is bind-mounted at runtime. Alpine base. Supports amd64 and arm64."
+      "notes": "Re-tagged upstream PostgreSQL 18 Alpine image; postgresql.conf tuning is bind-mounted. PGDATA is /var/lib/postgresql/18/docker, with a dedicated postgres_18_data volume mounted at /var/lib/postgresql. Supports amd64 and arm64."
     },
     "valkey": {
       "image": "valkey/valkey",
