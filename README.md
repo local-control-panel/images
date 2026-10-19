@@ -18,11 +18,12 @@ All images are built for `linux/amd64` and `linux/arm64` (Apple Silicon, AWS Gra
 
 ```bash
 cp .env.example .env
-# Edit .env — set passwords, adjust versions if needed
+# Edit .env — set passwords; stack image versions come from versions.json
 
-node build.mjs            # build all images locally
-node build.mjs frankenphp # build one image
-node build.mjs --list     # print what would be built, without building
+node build.mjs                   # all supported PHP runtimes + data services
+node build.mjs frankenphp:8.3     # build one PHP runtime
+node build.mjs mariadb valkey     # pull pinned official data-service images
+node build.mjs --list             # inspect without building
 ```
 
 ## Running services
@@ -50,6 +51,18 @@ docker compose -p wcp -f stack/docker-compose.v2.yml up -d
 
 For CMS-specific deployment checks and current automation boundaries, see
 [stack/README.md](stack/README.md).
+
+## PostgreSQL 18
+
+PostgreSQL uses version 18, with the upstream multi-platform image
+pinned in `versions.json`. The stack service is `postgres-18`; both standalone
+and stack Compose use `postgres_18_data:/var/lib/postgresql` and
+`PGDATA=/var/lib/postgresql/18/docker`.
+
+`node build.mjs postgres` pulls the exact official upstream image; it does not
+try to build a missing Dockerfile. The local stack overlay uses that same pin.
+Production Compose uses its GHCR mirror, which the image workflow publishes
+from the catalog digest rather than from a mutable upstream tag.
 
 For the per-application FrankenPHP model, Caddy templates, worker policy and
 Cloudflare/direct-origin setup, see [frankenphp/README.md](frankenphp/README.md).
@@ -79,11 +92,18 @@ network clients and control-panel commands working. The standalone Valkey
 Compose file uses that network connection; its socket is not shared with
 separately started application containers.
 
-Local mode (uses locally-built `wcp/*` images instead of the published GHCR
-ones — build them first with `node build.mjs`). WCP_INGRESS_D/WCP_RUNTIME_D/
-WCP_WWW_ROOT/WCP_CADDY_LOG must point at local sandbox directories (these
+Local mode uses locally built FrankenPHP and pinned official data-service
+images; prepare them with `node build.mjs`. Each supported PHP runtime is built
+with its own catalog tag. Ingress keeps the PHP 8.3 carrier image; its PHP
+version does not select a site runtime. Existing images are reused on the same
+platform; `--force` rebuilds them. No additional global builder is created.
+WCP_INGRESS_D/WCP_RUNTIME_D/WCP_WWW_ROOT/WCP_CADDY_LOG must point at local
+sandbox directories (these
 replace the real /etc/wcp/*, /var/www, /var/log/caddy host paths a real
-managed server would use):
+managed server would use). Optional PHP pools use `WCP_RUNTIME_84_D` and
+`WCP_RUNTIME_85_D` (defaults: `php84`/`php85` below `WCP_RUNTIME_D`).
+`WCP_SITE_SERVICES_D` and `WCP_TOOLS_D` default to `site-services` and `tools`
+below that same sandbox directory:
 
 ```bash
 docker compose -p wcp -f stack/docker-compose.v2.yml -f stack/docker-compose.v2.local.yml up -d

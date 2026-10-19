@@ -3,7 +3,7 @@
 # use; there is no legacy v1 single-container stack to coexist with.
 #
 # 1. cp ../.env.example ../.env
-# 2. Edit ../.env (versions + passwords)
+# 2. Edit ../.env (passwords and service settings)
 # 3. docker compose -p wcp -f docker-compose.v2.yml up -d
 
 services:
@@ -263,16 +263,17 @@ services:
       retries: 3
 
   # ── Relational DB (optional) ──────────────────────────────────────────────
-  postgres-17:
-    image: ${WCP_POSTGRES_IMAGE:-ghcr.io/local-control-panel/postgres:17@sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73}
+  postgres-18:
+    image: ${WCP_POSTGRES_IMAGE:-ghcr.io/local-control-panel/postgres:18@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873}
     restart: unless-stopped
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
       POSTGRES_DB: ${POSTGRES_DB:-app}
       POSTGRES_USER: ${POSTGRES_USER:-app}
+      PGDATA: /var/lib/postgresql/18/docker
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_18_data:/var/lib/postgresql
       - ../postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     networks:
       - backend
@@ -355,7 +356,7 @@ volumes:
   mariadb_data:
   valkey_data:
   valkey_socket:
-  postgres_data:
+  postgres_18_data:
   meilisearch_data:
     # Blue/green Meilisearch upgrades import into a new volume and atomically
     # switch this pointer together with WCP_MEILISEARCH_IMAGE. The default

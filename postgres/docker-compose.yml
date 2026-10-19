@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: ghcr.io/local-control-panel/postgres:${POSTGRES_VERSION:-17}
+    image: ${WCP_POSTGRES_IMAGE:-ghcr.io/local-control-panel/postgres:18@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873}
     container_name: postgres
     restart: unless-stopped
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
@@ -11,9 +11,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
       POSTGRES_DB: ${POSTGRES_DB:-app}
-      PGDATA: /var/lib/postgresql/data/pgdata
+      PGDATA: /var/lib/postgresql/18/docker
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_18_data:/var/lib/postgresql
       - ./postgresql.conf:/etc/postgresql/postgresql.conf:ro
     networks:
       - backend
@@ -33,7 +33,7 @@ services:
       start_period: 20s
 
 volumes:
-  postgres_data:
+  postgres_18_data:
 
 networks:
   backend:
