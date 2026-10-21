@@ -14,22 +14,6 @@ Custom Docker images for the WCP hosting stack — each one is a thin wrapper ar
 
 All images are built for `linux/amd64` and `linux/arm64` (Apple Silicon, AWS Graviton, Raspberry Pi).
 
-## PHP security release — 2026-10-21
-
-FrankenPHP builds use upstream **1.13.2**, with its reviewed multi-platform base
-index digest pinned separately for PHP 8.3, 8.4 and 8.5. The build fails unless
-both PHP CLI and FrankenPHP's embedded PHP meet the PHP2Shell fixed baseline:
-8.3.36, 8.4.27 or 8.5.12 respectively. Before publishing the stable tags, CI
-boots each native amd64/arm64 image through its normal entrypoint and verifies
-PHP over HTTP as well as container liveness. Version-specific tags
-`1.13.2-php8.3`, `1.13.2-php8.4` and `1.13.2-php8.5` accompany the stable tags.
-
-Sources: [FrankenPHP 1.13.2](https://github.com/php/frankenphp/releases/tag/v1.13.2)
-and [PHP security advisory](https://www.php.net/archive/2026.php#2026-10-21-5).
-A deployed container still needs to be recreated with the patched image;
-pulling an image does not update the serving runtime. Keep the PHP minor
-version and existing component configuration/volume layout when replacing it.
-
 ## Quick start
 
 ```bash

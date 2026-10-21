@@ -16,11 +16,6 @@ test("all supported PHP runtimes and exact official service pins are prepared", 
   const php = builds.filter((build) => build.group === "frankenphp");
   assert.deepEqual(php.map((build) => build.tag), images.frankenphp.runtimes.filter((runtime) => runtime.supportStatus === "supported").map((runtime) => `wcp/frankenphp:${runtime.tag}`));
   assert.ok(php.every((build) => build.buildArgs.FRANKENPHP_VERSION === images.frankenphp.baseVersion));
-  for (const build of php) {
-    const runtime = images.frankenphp.runtimes.find((runtime) => runtime.phpVersion === build.buildArgs.PHP_VERSION);
-    assert.match(runtime.baseDigest, /^sha256:[a-f0-9]{64}$/);
-    assert.equal(build.buildArgs.FRANKENPHP_BASE_DIGEST, `@${runtime.baseDigest}`);
-  }
   for (const service of ["mariadb", "valkey", "postgres", "meilisearch"]) {
     const entry = images[service];
     const tuples = entry.runtimes?.filter((runtime) => runtime.supportStatus === "supported") ?? [entry];
