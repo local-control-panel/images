@@ -53,7 +53,7 @@ const builds = [
   ...images.frankenphp.runtimes.filter((runtime) => runtime.supportStatus === "supported").map((runtime) => ({
     name: `frankenphp:${runtime.phpVersion}`, group: "frankenphp", official: false,
     tag: `wcp/frankenphp:${runtime.tag}`, context: join(directory, "frankenphp"),
-    buildArgs: { FRANKENPHP_VERSION: images.frankenphp.baseVersion, PHP_VERSION: runtime.phpVersion },
+    buildArgs: { FRANKENPHP_VERSION: images.frankenphp.baseVersion, PHP_VERSION: runtime.phpVersion, FRANKENPHP_BASE_DIGEST: `@${runtime.baseDigest}` },
   })),
   ...images.mariadb.runtimes.filter((runtime) => runtime.supportStatus === "supported").map((runtime) =>
     officialBuild("mariadb", images.mariadb, runtime.version, runtime.digest, `mariadb:${runtime.version}`)),

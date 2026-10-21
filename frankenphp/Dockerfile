@@ -1,9 +1,15 @@
 # The exact FrankenPHP release to build on. CI passes versions.json's
 # images.frankenphp.baseVersion; the published tags keep the major line
 # (`1-php8.3`) so runtime pool ids do not change with a minor release.
-ARG FRANKENPHP_VERSION=1.13.0
+ARG FRANKENPHP_VERSION=1.13.2
 ARG PHP_VERSION=8.3
-FROM dunglas/frankenphp:${FRANKENPHP_VERSION}-php${PHP_VERSION}
+# CI/local catalog builds pass an @sha256 suffix for the reviewed upstream base.
+ARG FRANKENPHP_BASE_DIGEST=""
+FROM dunglas/frankenphp:${FRANKENPHP_VERSION}-php${PHP_VERSION}${FRANKENPHP_BASE_DIGEST}
+
+COPY check-php-security.php /usr/local/share/wcp/check-php-security.php
+RUN php /usr/local/share/wcp/check-php-security.php \
+    && frankenphp php-cli /usr/local/share/wcp/check-php-security.php
 
 # ── System packages ─────────────────────────────────────────────────────────
 # Grouped into a single apt run to keep layers clean and the package index

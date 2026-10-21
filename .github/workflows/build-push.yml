@@ -23,6 +23,7 @@ jobs:
     outputs:
       frankenphp: ${{ steps.v.outputs.frankenphp }}
       frankenphp_base: ${{ steps.v.outputs.frankenphp_base }}
+      frankenphp_base_digests: ${{ steps.v.outputs.frankenphp_base_digests }}
       frankenphp_php_versions: ${{ steps.v.outputs.frankenphp_php_versions }}
       frankenphp_php_default: ${{ steps.v.outputs.frankenphp_php_default }}
       mariadb_runtimes: ${{ steps.v.outputs.mariadb_runtimes }}
@@ -46,6 +47,7 @@ jobs:
         run: |
           echo "frankenphp=$(jq -r '.images.frankenphp.version' versions.json)" >> $GITHUB_OUTPUT
           echo "frankenphp_base=$(jq -r '.images.frankenphp.baseVersion // .images.frankenphp.version' versions.json)" >> $GITHUB_OUTPUT
+          echo "frankenphp_base_digests=$(jq -c '[.images.frankenphp.runtimes[] | {key: .phpVersion, value: .baseDigest}] | from_entries' versions.json)" >> $GITHUB_OUTPUT
           echo "frankenphp_php_versions=$(jq -c '.images.frankenphp.phpVersions' versions.json)" >> $GITHUB_OUTPUT
           # No static `phpDefault` field - the recommended PHP version is
           # computed as the middle of the "supported" runtimes by version,
@@ -101,8 +103,12 @@ jobs:
               echo true
               return
             fi
-            old=$(git show "$BASE:versions.json" 2>/dev/null | jq -c ".images.$key" 2>/dev/null)
-            new=$(jq -c ".images.$key" versions.json)
+            filter=".images.$key"
+            if [ "$key" = "frankenphp" ]; then
+              filter="$filter | .runtimes |= map(del(.digest, .platformDigests))"
+            fi
+            old=$(git show "$BASE:versions.json" 2>/dev/null | jq -c "$filter" 2>/dev/null)
+            new=$(jq -c "$filter" versions.json)
             if [ "$old" != "$new" ]; then
               echo true
             else
@@ -156,6 +162,7 @@ jobs:
           build-args: |
             FRANKENPHP_VERSION=${{ needs.versions.outputs.frankenphp_base }}
             PHP_VERSION=${{ matrix.php }}
+            FRANKENPHP_BASE_DIGEST=@${{ fromJson(needs.versions.outputs.frankenphp_base_digests)[matrix.php] }}
           outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/frankenphp,push-by-digest=true,name-canonical=true,push=true
           # gha cache is fast but evicted after 7 days / 10GB; the registry
           # cache is slower but persists across the long gaps between
@@ -168,6 +175,13 @@ jobs:
           cache-to: |
             type=gha,mode=max,scope=frankenphp-${{ matrix.php }}-${{ env.PLATFORM_SLUG }}
             type=registry,ref=ghcr.io/${{ github.repository_owner }}/frankenphp:buildcache-${{ matrix.php }}-${{ env.PLATFORM_SLUG }},mode=max
+
+      - name: Verify patched PHP and normal-entrypoint HTTP runtime
+        env:
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          IMAGE_PLATFORM: ${{ matrix.platform }}
+          PHP_MINOR: ${{ matrix.php }}
+        run: .github/scripts/verify-frankenphp-image.sh "ghcr.io/${{ github.repository_owner }}/frankenphp@$IMAGE_DIGEST" "$IMAGE_PLATFORM" "$PHP_MINOR"
 
       - name: Export digest
         run: |
@@ -208,7 +222,7 @@ jobs:
       - name: Compute tags
         id: tags
         run: |
-          TAGS="ghcr.io/${{ github.repository_owner }}/frankenphp:${{ needs.versions.outputs.frankenphp }}-php${{ matrix.php }}"
+          TAGS="ghcr.io/${{ github.repository_owner }}/frankenphp:${{ needs.versions.outputs.frankenphp }}-php${{ matrix.php }},ghcr.io/${{ github.repository_owner }}/frankenphp:${{ needs.versions.outputs.frankenphp_base }}-php${{ matrix.php }}"
           if [ "${{ matrix.php }}" = "${{ needs.versions.outputs.frankenphp_php_default }}" ]; then
             TAGS="$TAGS,ghcr.io/${{ github.repository_owner }}/frankenphp:latest"
           fi
