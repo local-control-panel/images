@@ -28,6 +28,10 @@ services:
     volumes:
       - ../frankenphp/Caddyfile.ingress:/etc/caddy/Caddyfile:ro
       - /etc/wcp/ingress.d:/etc/wcp/ingress.d:ro
+      # Prebuilt static sites published by the engine (site.publishStatic).
+      # Read-only and separate from /var/www so ingress can never serve or
+      # write application content through it.
+      - /var/lib/wcp-static:/srv/wcp-static:ro
       - caddy_data:/data
       - caddy_config:/config
       - /var/log/caddy:/var/log/caddy
