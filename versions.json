@@ -11,12 +11,11 @@
       "image": "dunglas/frankenphp",
       "publishedImage": "ghcr.io/local-control-panel/frankenphp",
       "version": "1",
-      "baseVersion": "1.13.4",
+      "baseVersion": "1.13.2",
       "phpVersions": [
-        "8.5",
-        "8.4",
         "8.3",
-        "8.2"
+        "8.4",
+        "8.5"
       ],
       "runtimes": [
         {
