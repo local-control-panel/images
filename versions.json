@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "_comment": "Single source of truth for Docker image versions. Updated automatically by .github/workflows/update-docker-versions.yml",
-  "_updated": "2026-10-21",
+  "_updated": "2026-11-01",
   "platforms": [
     "linux/amd64",
     "linux/arm64"
@@ -11,11 +11,12 @@
       "image": "dunglas/frankenphp",
       "publishedImage": "ghcr.io/local-control-panel/frankenphp",
       "version": "1",
-      "baseVersion": "1.13.2",
+      "baseVersion": "1.13.4",
       "phpVersions": [
-        "8.3",
+        "8.5",
         "8.4",
-        "8.5"
+        "8.3",
+        "8.2"
       ],
       "runtimes": [
         {
@@ -72,10 +73,10 @@
           "id": "mariadb-11",
           "majorLine": "11",
           "version": "11.4",
-          "digest": "sha256:80494b9810694179889f7281ec44ca928241df577159c0356a1070e2e94616a1",
+          "digest": "sha256:d1891ede5a559f1086f55053bb8cc1569b0298338c4d72d71725a7f74f6ba620",
           "platformDigests": {
-            "linux/amd64": "sha256:ebf0b3e4493368caed4ed6dea8e9a8be0f52bf9844aa185b3e56b72a83838fb6",
-            "linux/arm64": "sha256:eebec83fe506646139690097318f650e0cb294f7436123b8d4c5866f2bd46d03"
+            "linux/amd64": "sha256:d9fc02976678d4236145299c40dc267051681b33489c994f0ec4a097ce4a9521",
+            "linux/arm64": "sha256:9640785a96ddd0aa19b50f89f693eebb065e2c7b494d8ae16e5b776a3680e7fb"
           },
           "supportStatus": "supported"
         }
@@ -91,10 +92,10 @@
       "image": "postgres",
       "publishedImage": "ghcr.io/local-control-panel/postgres",
       "version": "18",
-      "digest": "sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+      "digest": "sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5",
       "platformDigests": {
-        "linux/amd64": "sha256:d8703cd7fba306b9fec9268ecedfa8a966846c053036a60e3635791957eb2f66",
-        "linux/arm64": "sha256:89f747171c4b0af0eacf5984550060be79786dbe286eb60cfa691d79d1e8b23f"
+        "linux/amd64": "sha256:3b0ef735388b2cb097fc29b8bb421d86d57d0ddbe7aa1fbd6493e06d65028503",
+        "linux/arm64": "sha256:b1c1673a890fba8fae71d37210b4fd9a0b5cd0df8bb994a6bcc01d9cf8e1670c"
       },
       "tagPattern": "{version}-alpine",
       "platforms": [
@@ -108,10 +109,10 @@
       "image": "valkey/valkey",
       "publishedImage": "ghcr.io/local-control-panel/valkey",
       "version": "9",
-      "digest": "sha256:48332870af354a799964c0012ae1194a0bf2bf894eb508f945810596dc2d8d11",
+      "digest": "sha256:cdcb7b1c7b6f1c9cb9442c71ac6275e78184657448407b2c1fdde7ee8024f4fb",
       "platformDigests": {
-        "linux/amd64": "sha256:3b83b0b6a598bb390c8186a408a69949772f439548a81c5ea0ab7ccf102c248d",
-        "linux/arm64": "sha256:eb5a657e070199befde516f47a1015338b752f083e09c7736cb8c07d9ec99bdd"
+        "linux/amd64": "sha256:48dc9d22ed984d9599e0d5823726053b0b426a86cff534f6bf1bd3dfb951f33e",
+        "linux/arm64": "sha256:e1ae4808da2fbfb730c52e1d00b60c5c5d1e446bee844f186142abf6337e7a49"
       },
       "tagPattern": "{version}-alpine",
       "platforms": [
@@ -124,11 +125,11 @@
     "meilisearch": {
       "image": "getmeili/meilisearch",
       "publishedImage": "ghcr.io/local-control-panel/meilisearch",
-      "version": "1.53.2",
-      "digest": "sha256:c94e58ca09662dd6e65e8f1b0fd145767be3da7d5422a863a27b8d2b68e090c9",
+      "version": "1.53.3",
+      "digest": "sha256:cf9bb47e8ecf080f0b3ca33f58a2f9d1e382d5479d360541df05e1c49841e4a9",
       "platformDigests": {
-        "linux/amd64": "sha256:8d9bce7a169fd575290cee1ec2803315afbbb8dfa50122fb10d807ad393005aa",
-        "linux/arm64": "sha256:aaf373c8e8fc611669c912ab1e7e477399ad663af2bb7331036e32335f9219fe"
+        "linux/amd64": "sha256:638c3f35d635d00e850dcba4835dbe015c27df3408bfbbf883f1a4e2e65a311d",
+        "linux/arm64": "sha256:5c4375699a438b4851266aee61eb167e6aea95bdcdbecf6ac482130c3cae4ea9"
       },
       "tagPattern": "v{version}",
       "platforms": [
