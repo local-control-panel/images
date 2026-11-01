@@ -3,7 +3,7 @@ services:
   # is not a plain image swap. Use dump/import into a clean data store and keep
   # a same-version backup of the old volume for rollback; see the stack docs.
   meilisearch:
-    image: ghcr.io/local-control-panel/meilisearch:${MEILISEARCH_VERSION:-1.53.2}
+    image: ghcr.io/local-control-panel/meilisearch:${MEILISEARCH_VERSION:-1.53.3}
     container_name: meilisearch
     restart: unless-stopped
     env_file:
