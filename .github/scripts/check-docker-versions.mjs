@@ -9,7 +9,7 @@
  *   table    — markdown table rows for the PR body
  */
 
-import { readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -17,8 +17,8 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dir, "..", "..");
 const VERSIONS_PATH = join(ROOT, "versions.json");
 const COMPOSE_PATHS = [
-  join(ROOT, "stack", "docker-compose.yml"),
   join(ROOT, "stack", "docker-compose.v2.yml"),
+  join(ROOT, "stack", "docker-compose.v2.local.yml"),
   join(ROOT, "mariadb", "docker-compose.yml"),
   join(ROOT, "postgres", "docker-compose.yml"),
   join(ROOT, "valkey", "docker-compose.yml"),
@@ -329,6 +329,7 @@ versions._updated = today;
 if (changed && !DRY_RUN) {
   writeFileSync(VERSIONS_PATH, JSON.stringify(versions, null, 2) + "\n", "utf8");
   for (const path of COMPOSE_PATHS) {
+    if (!existsSync(path)) continue;
     let content = readFileSync(path, "utf8");
     const original = content;
     for (const [key, next] of Object.entries(versions.images)) {
