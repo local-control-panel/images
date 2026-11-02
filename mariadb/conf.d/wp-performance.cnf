@@ -7,11 +7,9 @@ collation_server         = utf8mb4_unicode_ci
 # Adjust MARIADB_INNODB_BUFFER_POOL_SIZE in .env for your VPS size:
 #   2 GB VPS → 768M   4 GB → 1536M   8 GB → 3072M
 innodb_buffer_pool_size  = 1024M
-innodb_buffer_pool_instances = 4       # one per 256 MB of pool
 innodb_log_file_size     = 256M
 innodb_log_buffer_size   = 16M
 innodb_flush_log_at_trx_commit = 2     # slightly less durable, much faster
-innodb_flush_method      = O_DIRECT    # skip OS page cache double-buffering
 
 # Connections
 max_connections          = 150
@@ -44,11 +42,19 @@ performance_schema       = OFF
 # InnoDB I/O parallelism — raise from default 4 on multi-core VPS
 innodb_read_io_threads   = 8
 innodb_write_io_threads  = 8
-innodb_file_per_table    = ON        # each table in its own .ibd file — DROP TABLE doesn't lock tablespace
 innodb_stats_on_metadata = OFF       # faster SHOW TABLE STATUS / INFORMATION_SCHEMA queries
 
 # Random read buffer — helps full-table scans on wp_options and wp_postmeta
 read_rnd_buffer_size     = 4M
+
+# Options MariaDB 13 removed or deprecated (it warns at every start). Only the
+# 11.4 series reads this group; 13 uses its own defaults, which are the same
+# behaviour: innodb_data_file_buffering=OFF is O_DIRECT, innodb_file_per_table
+# is ON, and there is a single buffer pool.
+[mariadb-11.4]
+innodb_buffer_pool_instances = 4       # one per 256 MB of pool
+innodb_flush_method      = O_DIRECT    # skip OS page cache double-buffering
+innodb_file_per_table    = ON          # each table in its own .ibd file — DROP TABLE doesn't lock tablespace
 
 [client]
 default-character-set    = utf8mb4
