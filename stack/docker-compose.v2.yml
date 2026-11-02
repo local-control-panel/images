@@ -309,7 +309,7 @@ services:
 
   # ── Object cache ──────────────────────────────────────────────────────────
   valkey-9:
-    image: ${WCP_VALKEY_IMAGE:-ghcr.io/local-control-panel/valkey:9@sha256:cdcb7b1c7b6f1c9cb9442c71ac6275e78184657448407b2c1fdde7ee8024f4fb}
+    image: ${WCP_VALKEY_IMAGE:-ghcr.io/local-control-panel/valkey:9@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b}
     restart: unless-stopped
     # The start script writes the ACL file from VALKEY_ADMIN_PASSWORD, then
     # hands over to the image's entrypoint (which drops root).

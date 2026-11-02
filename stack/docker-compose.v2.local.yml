@@ -70,7 +70,7 @@ services:
     image: ${WCP_MARIADB_13_IMAGE:-mariadb:13.0@sha256:f4054da26e3a9dd6c8b5cc97363e544408b15c0fb369d7359c25dc04826eb6e1}
 
   valkey-9:
-    image: ${WCP_VALKEY_IMAGE:-valkey/valkey:9-alpine@sha256:cdcb7b1c7b6f1c9cb9442c71ac6275e78184657448407b2c1fdde7ee8024f4fb}
+    image: ${WCP_VALKEY_IMAGE:-valkey/valkey:9-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b}
 
   postgres-18:
     image: ${WCP_POSTGRES_IMAGE:-postgres:18-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5}

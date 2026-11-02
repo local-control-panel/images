@@ -132,10 +132,10 @@
       "image": "valkey/valkey",
       "publishedImage": "ghcr.io/local-control-panel/valkey",
       "version": "9",
-      "digest": "sha256:cdcb7b1c7b6f1c9cb9442c71ac6275e78184657448407b2c1fdde7ee8024f4fb",
+      "digest": "sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b",
       "platformDigests": {
-        "linux/amd64": "sha256:48dc9d22ed984d9599e0d5823726053b0b426a86cff534f6bf1bd3dfb951f33e",
-        "linux/arm64": "sha256:e1ae4808da2fbfb730c52e1d00b60c5c5d1e446bee844f186142abf6337e7a49"
+        "linux/amd64": "sha256:de6fbe9626fea9f6f297b6867d2c8cf8f0394ee5ed171613166fc093cb49d0a6",
+        "linux/arm64": "sha256:8ad17cd9f6481c2f453ed9c3c133978c960025ee6cd0db13a90712cb69b5b2a7"
       },
       "tagPattern": "{version}-alpine",
       "platforms": [
