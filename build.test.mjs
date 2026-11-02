@@ -65,7 +65,7 @@ test("local Compose consumes exactly the images prepared for every runtime", (t)
     WCP_INGRESS_D: "/tmp/wcp-local-test/ingress", WCP_RUNTIME_D: "/tmp/wcp-local-test/runtime",
     WCP_WWW_ROOT: "/tmp/wcp-local-test/www", WCP_CADDY_LOG: "/tmp/wcp-local-test/logs" };
   for (const key of Object.keys(env)) {
-    if ((key.startsWith("WCP_") && key.endsWith("_IMAGE")) || ["WCP_RUNTIME_84_D", "WCP_RUNTIME_85_D", "WCP_SITE_SERVICES_D", "WCP_TOOLS_D"].includes(key)) delete env[key];
+    if ((key.startsWith("WCP_") && key.endsWith("_IMAGE")) || ["WCP_RUNTIME_82_D", "WCP_RUNTIME_84_D", "WCP_RUNTIME_85_D", "WCP_SITE_SERVICES_D", "WCP_TOOLS_D"].includes(key)) delete env[key];
   }
   const result = spawnSync("docker", ["compose", "-f", join(directory, "stack/docker-compose.v2.yml"), "-f", join(directory, "stack/docker-compose.v2.local.yml"), "--profile", "*", "config", "--format", "json"], { encoding: "utf8", env });
   assert.equal(result.status, 0, result.stderr);
