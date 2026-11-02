@@ -52,6 +52,19 @@ docker compose -p wcp -f stack/docker-compose.v2.yml up -d
 For CMS-specific deployment checks and current automation boundaries, see
 [stack/README.md](stack/README.md).
 
+## PHP and MariaDB lines
+
+FrankenPHP runtimes cover PHP 8.2 to 8.5 (pools `fp1-php82` to `fp1-php85`,
+tags `1-php8.2` to `1-php8.5`); the PHP 8.3 pool is the default and the ingress
+carrier. PHP 8.2 is on-demand behind the `php-8.2` Compose profile like 8.4 and
+8.5. PHP versions that are past their support window are not offered.
+
+MariaDB ships as parallel lines, each with its own service and volume:
+`mariadb-11` (11.4 LTS, volume `mariadb_data`) and `mariadb-13` (13.0, volume
+`mariadb_13_data`, profile `db-13`). The stack starts one primary line; the
+other stays off until its profile is requested. Lines never share a data
+directory and nothing migrates data between them.
+
 ## PostgreSQL 18
 
 PostgreSQL uses version 18, with the upstream multi-platform image
@@ -100,8 +113,9 @@ platform; `--force` rebuilds them. No additional global builder is created.
 WCP_INGRESS_D/WCP_RUNTIME_D/WCP_WWW_ROOT/WCP_CADDY_LOG must point at local
 sandbox directories (these
 replace the real /etc/wcp/*, /var/www, /var/log/caddy host paths a real
-managed server would use). Optional PHP pools use `WCP_RUNTIME_84_D` and
-`WCP_RUNTIME_85_D` (defaults: `php84`/`php85` below `WCP_RUNTIME_D`).
+managed server would use). Optional PHP pools use `WCP_RUNTIME_82_D`,
+`WCP_RUNTIME_84_D` and `WCP_RUNTIME_85_D` (defaults: `php82`/`php84`/`php85`
+below `WCP_RUNTIME_D`).
 `WCP_SITE_SERVICES_D` and `WCP_TOOLS_D` default to `site-services` and `tools`
 below that same sandbox directory:
 
@@ -116,8 +130,9 @@ Images are automatically built and pushed to GitHub Container Registry on every 
 ```bash
 docker pull ghcr.io/local-control-panel/frankenphp:1-php8.3
 docker pull ghcr.io/local-control-panel/mariadb:11.4
+docker pull ghcr.io/local-control-panel/mariadb:13.0
 docker pull ghcr.io/local-control-panel/valkey:9
-docker pull ghcr.io/local-control-panel/meilisearch:1.53.2
+docker pull ghcr.io/local-control-panel/meilisearch:1.53.3
 ```
 
 ## Version management

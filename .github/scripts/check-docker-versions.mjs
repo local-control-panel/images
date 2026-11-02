@@ -271,10 +271,14 @@ for (const [key, cfg] of Object.entries(versions.images)) {
       ) {
         extraChanges.baseVersion = result.version;
       }
-      const sortedNew = result.phpVersions.join(",");
-      const sortedOld = (cfg.phpVersions ?? []).join(",");
-      if (sortedNew !== sortedOld && result.phpVersions.length > 0) {
-        extraChanges.phpVersions = result.phpVersions;
+      // The offered PHP set is curated (end-of-life versions stay out), so a
+      // PHP version newer than every current one is only reported as a
+      // candidate; older upstream tags never widen the set.
+      const newest = (list) => Math.max(...list.map((v) => { const [a, b] = v.split(".").map(Number); return a * 100 + b; }));
+      const known = cfg.phpVersions ?? [];
+      const fresh = result.phpVersions.filter((v) => !known.includes(v));
+      if (known.length && fresh.some((v) => newest([v]) > newest(known))) {
+        majorRows.push(`| frankenphp (PHP) | ${known.join(", ")} | \`${fresh.filter((v) => newest([v]) > newest(known)).join(", ")}\` |`);
       }
     } else {
       const result = await latestStableVersion(cfg.image, cfg.version, cfg.tagPattern);
@@ -302,6 +306,16 @@ for (const [key, cfg] of Object.entries(versions.images)) {
     const old = cfg.version;
     const hasVersionChange = newVersion !== old;
     const hasExtraChanges = Object.keys(extraChanges).length > 0;
+
+    if (key === "frankenphp" && extraChanges.baseVersion && !DRY_RUN) {
+      // Keep the Dockerfile default aligned with the catalog's base release.
+      const dockerfile = join(ROOT, "frankenphp", "Dockerfile");
+      writeFileSync(
+        dockerfile,
+        readFileSync(dockerfile, "utf8").replace(/^ARG FRANKENPHP_VERSION=.*$/m, `ARG FRANKENPHP_VERSION=${extraChanges.baseVersion}`),
+        "utf8",
+      );
+    }
 
     if (hasVersionChange || hasExtraChanges) {
       console.log(

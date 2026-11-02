@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "_comment": "Single source of truth for Docker image versions. Updated automatically by .github/workflows/update-docker-versions.yml",
-  "_updated": "2026-11-01",
+  "_updated": "2026-11-02",
   "platforms": [
     "linux/amd64",
     "linux/arm64"
@@ -11,8 +11,9 @@
       "image": "dunglas/frankenphp",
       "publishedImage": "ghcr.io/local-control-panel/frankenphp",
       "version": "1",
-      "baseVersion": "1.13.2",
+      "baseVersion": "1.13.4",
       "phpVersions": [
+        "8.2",
         "8.3",
         "8.4",
         "8.5"
@@ -53,6 +54,13 @@
             "linux/amd64": "sha256:97fa88a36b336e7162a5bbaa0c31482910d449996f96519a698e2c84186e2325",
             "linux/arm64": "sha256:38955c1c1c7913d78ecb235ed26bbd750ca09c4ada58ed00ce7cc152004914f7"
           }
+        },
+        {
+          "id": "fp1-php82",
+          "frankenphpVersion": "1",
+          "phpVersion": "8.2",
+          "tag": "1-php8.2",
+          "supportStatus": "supported"
         }
       ],
       "tagPattern": "{version}-php{phpVersion}",
@@ -76,6 +84,17 @@
           "platformDigests": {
             "linux/amd64": "sha256:d9fc02976678d4236145299c40dc267051681b33489c994f0ec4a097ce4a9521",
             "linux/arm64": "sha256:9640785a96ddd0aa19b50f89f693eebb065e2c7b494d8ae16e5b776a3680e7fb"
+          },
+          "supportStatus": "supported"
+        },
+        {
+          "id": "mariadb-13",
+          "majorLine": "13",
+          "version": "13.0",
+          "digest": "sha256:f4054da26e3a9dd6c8b5cc97363e544408b15c0fb369d7359c25dc04826eb6e1",
+          "platformDigests": {
+            "linux/amd64": "sha256:0231965d72f758adea93162ed7be119dfd49f14172c5754ed8c9d49b0f17bbc6",
+            "linux/arm64": "sha256:6d882f903b25c6517caf5d14422ebfc371f4c34ebb8fd3c64320a6dc43c9271d"
           },
           "supportStatus": "supported"
         }

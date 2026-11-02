@@ -114,6 +114,43 @@ services:
   # Handle sites that require a different PHP version than the default
   # (8.3). Ingress reverse-proxies to these by domain. Started on demand via
   # --profile php-8.X - not running by default (mirrors docker-compose.yml).
+  runtime-fp1-php82:
+    image: ${WCP_FRANKENPHP_82_IMAGE:-ghcr.io/local-control-panel/frankenphp:1-php8.2}
+    restart: unless-stopped
+    profiles: ["php-8.2"]
+    volumes:
+      - ../frankenphp/Caddyfile.runtime:/etc/caddy/Caddyfile:ro
+      - ../frankenphp/php.ini:/usr/local/etc/php/conf.d/wp-performance.ini:ro
+      - /etc/wcp/runtimes/fp1-php82:/etc/wcp/runtime.d:ro
+      - /etc/wcp/site-services/fp1-php82:/etc/wcp/site-services
+      # Engine-managed tools (tool.install), e.g. WP-CLI; read-only.
+      - /var/lib/wcp/tools:/opt/wcp-tools:ro
+      - /var/www:/var/www
+      - /var/log/caddy:/var/log/caddy
+      - valkey_socket:/run/valkey:ro
+    environment:
+      CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
+    networks:
+      - edge
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1024M
+    # RP-10 (docs/devdocs/runtime-platform/README.md): this pool runs the
+    # same untrusted PHP application code as runtime-fp1-php83 above, which
+    # already has this - missing here looked like an oversight, not a
+    # deliberate difference.
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://localhost/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
   runtime-fp1-php84:
     image: ${WCP_FRANKENPHP_84_IMAGE:-ghcr.io/local-control-panel/frankenphp:1-php8.4@sha256:5ec9ac3e2238d211af231645a0f98dfd0ef6907cec9c5a3ec9bc4b479213baf0}
     restart: unless-stopped
@@ -197,6 +234,50 @@ services:
       MARIADB_PASSWORD: ${MARIADB_PASSWORD:?required}
     volumes:
       - mariadb_data:/var/lib/mysql
+      - ../mariadb/conf.d:/etc/mysql/conf.d:ro
+    networks:
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Parallel MariaDB 13.0 line: its own service and data volume, started on
+  # demand (--profile db-13) or as the server's primary line when chosen at
+  # install. It never shares or migrates the mariadb-11 volume.
+  mariadb-13:
+    image: ${WCP_MARIADB_13_IMAGE:-ghcr.io/local-control-panel/mariadb:13.0@sha256:f4054da26e3a9dd6c8b5cc97363e544408b15c0fb369d7359c25dc04826eb6e1}
+    restart: unless-stopped
+    profiles: ["db-13"]
+    command: --innodb-buffer-pool-size=${MARIADB_INNODB_BUFFER_POOL_SIZE:-1024M}
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?required}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-wordpress}
+      MARIADB_USER: ${MARIADB_USER:-wp}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:?required}
+    volumes:
+      - mariadb_13_data:/var/lib/mysql
       - ../mariadb/conf.d:/etc/mysql/conf.d:ro
     networks:
       - backend
@@ -358,6 +439,7 @@ volumes:
   caddy_data:
   caddy_config:
   mariadb_data:
+  mariadb_13_data:
   valkey_data:
   valkey_socket:
   postgres_18_data:

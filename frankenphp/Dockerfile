@@ -1,7 +1,7 @@
 # The exact FrankenPHP release to build on. CI passes versions.json's
 # images.frankenphp.baseVersion; the published tags keep the major line
 # (`1-php8.3`) so runtime pool ids do not change with a minor release.
-ARG FRANKENPHP_VERSION=1.13.2
+ARG FRANKENPHP_VERSION=1.13.4
 ARG PHP_VERSION=8.3
 FROM dunglas/frankenphp:${FRANKENPHP_VERSION}-php${PHP_VERSION}
 

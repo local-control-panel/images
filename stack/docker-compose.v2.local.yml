@@ -36,6 +36,15 @@ services:
       - ${WCP_WWW_ROOT}:/var/www
       - ${WCP_CADDY_LOG}:/var/log/caddy
 
+  runtime-fp1-php82:
+    image: ${WCP_FRANKENPHP_82_IMAGE:-wcp/frankenphp:1-php8.2}
+    volumes:
+      - ${WCP_RUNTIME_82_D:-${WCP_RUNTIME_D}/php82}:/etc/wcp/runtime.d:ro
+      - ${WCP_SITE_SERVICES_D:-${WCP_RUNTIME_D}/site-services}/fp1-php82:/etc/wcp/site-services
+      - ${WCP_TOOLS_D:-${WCP_RUNTIME_D}/tools}:/opt/wcp-tools:ro
+      - ${WCP_WWW_ROOT}:/var/www
+      - ${WCP_CADDY_LOG}:/var/log/caddy
+
   runtime-fp1-php84:
     image: ${WCP_FRANKENPHP_84_IMAGE:-wcp/frankenphp:1-php8.4}
     volumes:
@@ -55,13 +64,16 @@ services:
       - ${WCP_CADDY_LOG}:/var/log/caddy
 
   mariadb-11:
-    image: ${WCP_MARIADB_IMAGE:-mariadb:11.4@sha256:80494b9810694179889f7281ec44ca928241df577159c0356a1070e2e94616a1}
+    image: ${WCP_MARIADB_IMAGE:-mariadb:11.4@sha256:d1891ede5a559f1086f55053bb8cc1569b0298338c4d72d71725a7f74f6ba620}
+
+  mariadb-13:
+    image: ${WCP_MARIADB_13_IMAGE:-mariadb:13.0@sha256:f4054da26e3a9dd6c8b5cc97363e544408b15c0fb369d7359c25dc04826eb6e1}
 
   valkey-9:
-    image: ${WCP_VALKEY_IMAGE:-valkey/valkey:9-alpine@sha256:48332870af354a799964c0012ae1194a0bf2bf894eb508f945810596dc2d8d11}
+    image: ${WCP_VALKEY_IMAGE:-valkey/valkey:9-alpine@sha256:cdcb7b1c7b6f1c9cb9442c71ac6275e78184657448407b2c1fdde7ee8024f4fb}
 
   postgres-18:
-    image: ${WCP_POSTGRES_IMAGE:-postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873}
+    image: ${WCP_POSTGRES_IMAGE:-postgres:18-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5}
 
   meili-1:
-    image: ${WCP_MEILISEARCH_IMAGE:-getmeili/meilisearch:v1.53.2@sha256:c94e58ca09662dd6e65e8f1b0fd145767be3da7d5422a863a27b8d2b68e090c9}
+    image: ${WCP_MEILISEARCH_IMAGE:-getmeili/meilisearch:v1.53.3@sha256:cf9bb47e8ecf080f0b3ca33f58a2f9d1e382d5479d360541df05e1c49841e4a9}
