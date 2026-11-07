@@ -235,8 +235,12 @@ services:
     volumes:
       - mariadb_data:/var/lib/mysql
       - ../mariadb/conf.d:/etc/mysql/conf.d:ro
+    # `WCP_MARIADB_11_ALIAS` is set to the old service name after `db.migrateMariadbLine`
+    # moved that line's databases here, so sites keep their DB_HOST.
     networks:
-      - backend
+      backend:
+        aliases:
+          - ${WCP_MARIADB_11_ALIAS:-mariadb-11}
     deploy:
       resources:
         limits:
@@ -279,8 +283,12 @@ services:
     volumes:
       - mariadb_13_data:/var/lib/mysql
       - ../mariadb/conf.d:/etc/mysql/conf.d:ro
+    # `WCP_MARIADB_13_ALIAS` is set to the old service name after `db.migrateMariadbLine`
+    # moved that line's databases here, so sites keep their DB_HOST.
     networks:
-      - backend
+      backend:
+        aliases:
+          - ${WCP_MARIADB_13_ALIAS:-mariadb-13}
     deploy:
       resources:
         limits:
