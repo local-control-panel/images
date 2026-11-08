@@ -2,10 +2,10 @@
 
 The Compose stack supplies ingress, PHP runtime pools, MariaDB, optional
 PostgreSQL and Meilisearch, and Valkey. A CMS is an application deployed into a
-site runtime, not another copy of the whole stack. The control panel currently
+site runtime, not another copy of the whole stack. OrbDen currently
 automates WordPress installation; its Drupal support is read-only diagnostics,
 and Joomla detection is read-only. See the
-[control panel application driver plan](https://github.com/local-control-panel/docs/blob/main/website-control-panel/devdocs/application-drivers.md)
+[OrbDen application driver plan](https://github.com/local-control-panel/docs/blob/main/website-control-panel/devdocs/application-drivers.md)
 before adding CMS-specific provisioning here.
 
 ## Before enabling a CMS site
@@ -16,7 +16,7 @@ before adding CMS-specific provisioning here.
 2. Set the public document root to the CMS's actual web directory. A Composer
    project may have private code and `vendor/` above that directory; the site
    process must be able to read those files while the web server serves only
-   the public root. The control panel's current `open_basedir` uses the public
+   the public root. OrbDen's current `open_basedir` uses the public
    root, so such layouts need a project-root-aware site contract first.
 3. Translate the CMS's web-server rules into the generated per-site Caddy
    configuration. Apache `.htaccess` files are not applied by Caddy. Check
@@ -28,7 +28,7 @@ before adding CMS-specific provisioning here.
 5. Prove the installation and update path with a real site: clean URLs,
    uploads, cache invalidation, scheduled jobs, backup/restore, and rollback.
 
-| Application | Likely public root | Stack prerequisites | Current control-panel state |
+| Application | Likely public root | Stack prerequisites | Current OrbDen state |
 | --- | --- | --- | --- |
 | WordPress | Site root | PHP, MariaDB; Valkey is optional | Install and operations available |
 | Drupal Composer project | `web/` | Supported PHP/DB versions, Composer build, project-root access, CMS Caddy rules | Detection and diagnostics only |

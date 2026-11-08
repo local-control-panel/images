@@ -10,7 +10,7 @@ actually present at runtime.
 The image ships no WP-CLI and no Composer. The Operations Engine installs
 pinned, checksum-verified releases on the host
 (`ops-engine tool install --tool wp-cli` or `--tool composer`, or "Server
-tools" in the control panel) under `/var/lib/wcp/tools`, and the Compose files
+tools" in OrbDen) under `/var/lib/wcp/tools`, and the Compose files
 mount that directory read-only at `/opt/wcp-tools`. A tool update therefore
 needs neither an image rebuild nor a container restart, and it survives image
 updates.
@@ -24,7 +24,7 @@ shell out to them. The development image (`Dockerfile.dev`) still carries its
 own Composer.
 
 The `wp doctor` package that used to be installed in the image for root shells
-is gone; it was never used by the control panel or the engine.
+is gone; it was never used by OrbDen or the engine.
 
 ## Add an application
 

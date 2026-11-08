@@ -95,5 +95,5 @@ http://localhost {
 # application runtime concern and must be explicitly selected in that site's
 # php_server block after it has been proven worker-safe.
 
-# Import per-application Caddyfiles managed by the control panel.
+# Import per-application Caddyfiles managed by OrbDen.
 import /etc/frankenphp/Caddyfile.d/*.caddyfile

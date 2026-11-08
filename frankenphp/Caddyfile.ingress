@@ -32,5 +32,5 @@ http://localhost {
 # Ingress is the only public entry point (Compose layout v2). It terminates
 # TLS and reverse-proxies to a runtime pool by domain - it does not execute
 # PHP, mount /var/www, or reach the backend network. Route files are written
-# by the control panel, one per site: docs/devdocs/runtime-platform/README.md.
+# by OrbDen, one per site: docs/devdocs/runtime-platform/README.md.
 import /etc/wcp/ingress.d/*.caddyfile

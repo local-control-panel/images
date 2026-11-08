@@ -6,5 +6,5 @@
 
 # Secondary PHP containers deliberately do not define global workers. Each
 # application opts into a worker in its own php_server block when compatible.
-# Import per-site Caddyfiles managed by the control panel.
+# Import per-site Caddyfiles managed by OrbDen.
 import /etc/frankenphp/Caddyfile.d/*.caddyfile

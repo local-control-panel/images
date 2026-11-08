@@ -1,6 +1,6 @@
 # images
 
-Custom Docker images for the WCP hosting stack — each one is a thin wrapper around an official base image with performance-tuned configuration baked in.
+Custom Docker images for the OrbDen hosting stack — each one is a thin wrapper around an official base image with performance-tuned configuration baked in.
 
 ## Images
 
@@ -43,7 +43,7 @@ name `stack/docker-compose.v2.yml` creates under project `wcp` — so starting
 one of these alongside an already-running v2 stack lets it join that stack.
 
 Full stack (ingress + PHP-version runtime pools; see
-docs/devdocs/runtime-platform/README.md in the control panel repo):
+docs/devdocs/runtime-platform/README.md in the OrbDen repo):
 
 ```bash
 docker compose -p wcp -f stack/docker-compose.v2.yml up -d
@@ -96,12 +96,12 @@ that database, may `FLUSHDB` and `SCAN` it, and cannot `SELECT` another one, run
 `FLUSHALL`, `KEYS`, `CONFIG` or other administrative commands. Users are kept in
 `/data/users.acl` (hashed passwords). Point the application's client at the
 socket path with the site's user, password and database number.
-The control panel talks to Valkey with
+OrbDen talks to Valkey with
 `docker exec <valkey> sh /etc/valkey/wcp-valkey-cli.sh <command>`, which reads
 the administrator password from the container's own environment.
 
 Valkey also listens on port `6379` on the private `backend` network. This keeps
-network clients and control-panel commands working. The standalone Valkey
+network clients and OrbDen commands working. The standalone Valkey
 Compose file uses that network connection; its socket is not shared with
 separately started application containers.
 
