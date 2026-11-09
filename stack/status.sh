@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pre-flight health check for the WCP hosting stack.
+# Pre-flight health check for the OrbDen hosting stack.
 # Run before docker compose up to catch common misconfigurations.
 #
 # Targets docker-compose.v2.yml; override with WCP_COMPOSE_FILE.
@@ -26,7 +26,7 @@ warn() { printf '  \033[33m⚠\033[0m %s\n' "$*"; }
 fail() { printf '  \033[31m✗\033[0m %s\n' "$*"; ERRORS=$((ERRORS+1)); }
 ERRORS=0
 
-echo "WCP Stack — pre-flight check ($COMPOSE_NAME)"
+echo "OrbDen Stack — pre-flight check ($COMPOSE_NAME)"
 echo "────────────────────────────"
 
 # 1. Docker available
